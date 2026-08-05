@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+}
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --card: #151515;
+  --card-foreground: var(--foreground);
+  --primary: #d4b038;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1d1d1d;
+  --secondary-foreground: var(--foreground);
+  --muted: #141414;
+  --muted-foreground: #8a8377;
+  --accent: var(--primary);
+  --accent-foreground: #0a0a0a;
+  --destructive: #d64f4f;
+  --border: #262626;
+  --input: #333333;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
