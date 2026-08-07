@@ -2,6 +2,7 @@
 
 import { X } from "@phosphor-icons/react";
 import { clsx } from "clsx";
+import ReactSelect, { GroupBase, SingleValue } from "react-select";
 import React, {
   useEffect,
   useId,
@@ -87,15 +88,72 @@ export function Textarea({
   );
 }
 
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
 export function Select({
+  value,
+  onChange,
+  options = [],
+  placeholder,
   className,
-  children,
-  ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  disabled,
+  id,
+  required,
+}: {
+  value?: string;
+  onChange?: (value: string) => void;
+  options?: SelectOption[];
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+  id?: string;
+  required?: boolean;
+}) {
+  const selected = options.find((o) => o.value === value) ?? null;
   return (
-    <select className={clsx(inputClasses, className)} {...props}>
-      {children}
-    </select>
+    <ReactSelect
+      inputId={id}
+      className={clsx("text-sm", className)}
+      classNamePrefix="rs"
+      isDisabled={disabled}
+      placeholder={placeholder ?? "Select…"}
+      options={options}
+      value={selected}
+      onChange={(option) => {
+        const val = (option as SingleValue<SelectOption>)?.value ?? "";
+        if (required && !val) return;
+        onChange?.(val);
+      }}
+      isSearchable={false}
+      menuPlacement="auto"
+      styles={{
+        control: (base, state) => ({
+          ...base,
+          minHeight: 36,
+          height: 36,
+          borderRadius: 6,
+          borderColor: state.isFocused ? "hsl(var(--primary))" : "hsl(var(--border))",
+          boxShadow: state.isFocused ? "0 0 0 2px hsl(var(--primary) / 0.2)" : "none",
+          backgroundColor: "transparent",
+          fontSize: 14,
+        }),
+        valueContainer: (base) => ({ ...base, padding: "0 8px" }),
+        singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
+        placeholder: (base) => ({ ...base, color: "hsl(var(--muted-foreground))" }),
+        indicatorSeparator: () => ({ display: "none" }),
+        dropdownIndicator: (base) => ({ ...base, color: "hsl(var(--muted-foreground))", padding: 4 }),
+        menu: (base) => ({ ...base, zIndex: 50, backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 6 }),
+        option: (base, state) => ({
+          ...base,
+          backgroundColor: state.isFocused ? "hsl(var(--accent))" : "transparent",
+          color: "hsl(var(--foreground))",
+          fontSize: 14,
+        }),
+      }}
+    />
   );
 }
 

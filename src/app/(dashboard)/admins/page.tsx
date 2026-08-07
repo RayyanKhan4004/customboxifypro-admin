@@ -165,17 +165,18 @@ export default function AdminsPage() {
         />
         <Select
           value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(event.target.value);
+          onChange={(v) => {
+            setStatusFilter(v);
             setPage(1);
           }}
           className="w-36"
-        >
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="invited">Invited</option>
-          <option value="disabled">Disabled</option>
-        </Select>
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "active", label: "Active" },
+            { value: "invited", label: "Invited" },
+            { value: "disabled", label: "Disabled" },
+          ]}
+        />
       </Toolbar>
 
       <Table
@@ -285,17 +286,14 @@ export default function AdminsPage() {
               <Select
                 required
                 value={form.roleId}
-                onChange={(event) => setForm((prev) => ({ ...prev, roleId: event.target.value }))}
-              >
-                <option value="">Select a role</option>
-                {(roles.data ?? [])
-                  .filter((role) => role.status === "active")
-                  .map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-              </Select>
+                onChange={(v) => setForm((prev) => ({ ...prev, roleId: v }))}
+                options={[
+                  { value: "", label: "Select a role" },
+                  ...(roles.data ?? [])
+                    .filter((role) => role.status === "active")
+                    .map((role) => ({ value: role.id, label: role.name })),
+                ]}
+              />
             </Field>
             {modalMode === "new" && (
               <Field label="Password *" hint="At least 12 characters.">

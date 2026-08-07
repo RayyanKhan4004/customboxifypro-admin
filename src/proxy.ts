@@ -1,7 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 // UX-only guard: presence of an auth cookie decides the redirect. Real
-// authorization is enforced by the backend on every API call.
+// authorization is enforced by the backend on every API call. Cookie names
+// must match the backend's COOKIE_ACCESS_NAME / COOKIE_REFRESH_NAME.
+const ACCESS_COOKIE =
+  process.env.ADMIN_COOKIE_ACCESS_NAME ?? "boxify_access";
+const REFRESH_COOKIE =
+  process.env.ADMIN_COOKIE_REFRESH_NAME ?? "boxify_refresh";
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -16,8 +22,8 @@ export function proxy(request: NextRequest) {
   const isPublic =
     pathname === "/login" || pathname === "/reset-password";
   const hasAuth = Boolean(
-    request.cookies.get("boxify_access") ||
-      request.cookies.get("boxify_refresh"),
+    request.cookies.get(ACCESS_COOKIE) ||
+      request.cookies.get(REFRESH_COOKIE),
   );
 
   if (hasAuth && pathname === "/login") {

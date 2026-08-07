@@ -171,29 +171,29 @@ export default function RequestsPage() {
           }}
           className="w-56"
         />
-        <Select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }} className="w-36">
-          <option value="">All statuses</option>
-          {REQUEST_STATUSES.map((value) => (
-            <option key={value} value={value}>{value}</option>
-          ))}
-        </Select>
-        <Select value={requestType} onChange={(event) => { setRequestType(event.target.value); setPage(1); }} className="w-40">
-          <option value="">All types</option>
-          {REQUEST_TYPES.map((value) => (
-            <option key={value} value={value}>{value}</option>
-          ))}
-        </Select>
+        <Select
+          value={status}
+          onChange={(v) => { setStatus(v); setPage(1); }}
+          className="w-36"
+          options={[{ value: "", label: "All statuses" }, ...REQUEST_STATUSES.map((value) => ({ value, label: value }))]}
+        />
+        <Select
+          value={requestType}
+          onChange={(v) => { setRequestType(v); setPage(1); }}
+          className="w-40"
+          options={[{ value: "", label: "All types" }, ...REQUEST_TYPES.map((value) => ({ value, label: value }))]}
+        />
       </Toolbar>
 
       {selected.size > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
           <span className="text-muted-foreground">{selected.size} selected</span>
-          <Select value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value)} className="w-40">
-            <option value="">Set status…</option>
-            {REQUEST_STATUSES.map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </Select>
+          <Select
+            value={bulkStatus}
+            onChange={setBulkStatus}
+            className="w-40"
+            options={[{ value: "", label: "Set status…" }, ...REQUEST_STATUSES.map((value) => ({ value, label: value }))]}
+          />
           <Button size="sm" disabled={!bulkStatus || bulkMutation.isPending} onClick={() => bulkMutation.mutate()}>
             Apply
           </Button>
@@ -300,11 +300,11 @@ export default function RequestsPage() {
 
             <div className="grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-2">
               <Field label="Change status">
-                <Select value={detail.status} onChange={(event) => setDetail({ ...detail, status: event.target.value as CustomerRequest["status"] })}>
-                  {REQUEST_STATUSES.map((value) => (
-                    <option key={value} value={value}>{value}</option>
-                  ))}
-                </Select>
+                <Select
+                  value={detail.status}
+                  onChange={(v) => setDetail({ ...detail, status: v as CustomerRequest["status"] })}
+                  options={REQUEST_STATUSES.map((value) => ({ value, label: value }))}
+                />
                 <div className="mt-2 flex gap-2">
                   <Input
                     placeholder="Optional note"
@@ -319,12 +319,11 @@ export default function RequestsPage() {
               </Field>
               <Field label="Assign to">
                 <div className="flex gap-2">
-                  <Select value={assignAdminId} onChange={(event) => setAssignAdminId(event.target.value)}>
-                    <option value="">Unassigned</option>
-                    {assigneeOptions.map((admin) => (
-                      <option key={admin.id} value={admin.id}>{admin.name}</option>
-                    ))}
-                  </Select>
+                  <Select
+                    value={assignAdminId}
+                    onChange={setAssignAdminId}
+                    options={[{ value: "", label: "Unassigned" }, ...assigneeOptions.map((admin) => ({ value: admin.id, label: admin.name }))]}
+                  />
                   <Button onClick={() => assignMutation.mutate()} disabled={assignMutation.isPending || !assignAdminId}>
                     {assignMutation.isPending ? <Spinner /> : null}
                     Assign

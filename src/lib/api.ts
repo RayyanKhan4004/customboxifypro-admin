@@ -2,6 +2,8 @@ import type { ApiErrorBody } from "./types";
 
 const BASE = "/api/v1";
 
+const CSRF_HEADERS = { "X-Requested-With": "XMLHttpRequest" };
+
 export class ApiError extends Error {
   statusCode: number;
   code: string;
@@ -25,6 +27,7 @@ async function refreshSession(): Promise<boolean> {
     const res = await fetch(`${BASE}/admin/auth/refresh`, {
       method: "POST",
       credentials: "include",
+      headers: CSRF_HEADERS,
     });
     return res.ok;
   })().finally(() => {
@@ -54,6 +57,7 @@ async function rawRequest(
   const response = await fetch(`${BASE}${path}`, {
     credentials: "include",
     ...init,
+    headers: { ...CSRF_HEADERS, ...(init.headers ?? {}) },
   });
   let body: unknown = null;
   try {
@@ -66,7 +70,10 @@ async function rawRequest(
   }
   if (body && typeof body === "object" && "data" in body) {
     const envelope = body as { data: unknown; meta?: unknown };
-    return { data: envelope.data, meta: envelope.meta, response };
+    if (envelope.meta !== undefined) {
+      return { data: { data: envelope.data, meta: envelope.meta }, response };
+    }
+    return { data: envelope.data, response };
   }
   return { data: body, meta: undefined, response };
 }
@@ -152,7 +159,10 @@ export async function downloadCsv(
   path: string,
   filename: string,
 ): Promise<void> {
-  const response = await fetch(`${BASE}${path}`, { credentials: "include" });
+  const response = await fetch(`${BASE}${path}`, {
+    credentials: "include",
+    headers: CSRF_HEADERS,
+  });
   if (!response.ok) {
     let body: unknown = null;
     try {

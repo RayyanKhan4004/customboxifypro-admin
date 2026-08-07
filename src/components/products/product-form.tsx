@@ -256,57 +256,53 @@ export function ProductForm({
             <Select
               required
               value={state.categoryId}
-              onChange={(event) => {
-                set("categoryId", event.target.value);
+              onChange={(v) => {
+                set("categoryId", v);
                 set("subcategoryId", "");
               }}
-            >
-              <option value="">Select a category</option>
-              {categories
-                .filter((category) => category.isActive && !category.parentId)
-                .map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-            </Select>
+              options={[
+                { value: "", label: "Select a category" },
+                ...categories
+                  .filter((category) => category.isActive && !category.parentId)
+                  .map((category) => ({ value: category.id, label: category.name })),
+              ]}
+            />
           </Field>
           <Field label="Subcategory">
             <Select
               value={state.subcategoryId}
-              onChange={(event) => set("subcategoryId", event.target.value)}
+              onChange={(v) => set("subcategoryId", v)}
               disabled={subcategories.length === 0}
-            >
-              <option value="">None</option>
-              {subcategories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {indentCategories(category)}
-                  {category.name}
-                </option>
-              ))}
-            </Select>
+              options={[
+                { value: "", label: "None" },
+                ...subcategories.map((category) => ({
+                  value: category.id,
+                  label: `${indentCategories(category)}${category.name}`,
+                })),
+              ]}
+            />
           </Field>
           <Field label="Status">
             <Select
               value={state.status}
-              onChange={(event) => set("status", event.target.value as FormState["status"])}
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </Select>
+              onChange={(v) => set("status", v as FormState["status"])}
+              options={[
+                { value: "draft", label: "Draft" },
+                { value: "published", label: "Published" },
+                { value: "archived", label: "Archived" },
+              ]}
+            />
           </Field>
           <Field label="Visibility">
             <Select
               value={state.visibility}
-              onChange={(event) =>
-                set("visibility", event.target.value as FormState["visibility"])
-              }
-            >
-              <option value="public">Public</option>
-              <option value="internal">Internal</option>
-              <option value="hidden">Hidden</option>
-            </Select>
+              onChange={(v) => set("visibility", v as FormState["visibility"])}
+              options={[
+                { value: "public", label: "Public" },
+                { value: "internal", label: "Internal" },
+                { value: "hidden", label: "Hidden" },
+              ]}
+            />
           </Field>
           <Field label="SKU">
             <Input
@@ -379,24 +375,22 @@ export function ProductForm({
                 {def.dataType === "boolean" ? (
                   <Select
                     value={state.attributes[def.key] ?? ""}
-                    onChange={(event) => setAttribute(def.key, event.target.value)}
-                  >
-                    <option value="">—</option>
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </Select>
+                    onChange={(v) => setAttribute(def.key, v)}
+                    options={[
+                      { value: "", label: "—" },
+                      { value: "true", label: "Yes" },
+                      { value: "false", label: "No" },
+                    ]}
+                  />
                 ) : def.dataType === "enum" && def.options.length ? (
                   <Select
                     value={state.attributes[def.key] ?? ""}
-                    onChange={(event) => setAttribute(def.key, event.target.value)}
-                  >
-                    <option value="">—</option>
-                    {def.options.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label || option.value}
-                      </option>
-                    ))}
-                  </Select>
+                    onChange={(v) => setAttribute(def.key, v)}
+                    options={[
+                      { value: "", label: "—" },
+                      ...def.options.map((option) => ({ value: option.value, label: option.label || option.value })),
+                    ]}
+                  />
                 ) : def.dataType === "number" ? (
                   <Input
                     type="number"
@@ -431,15 +425,16 @@ export function ProductForm({
           <Field label="Unit">
             <Select
               value={state.dimensions.unit}
-              onChange={(event) => setDim("unit", event.target.value)}
-            >
-              <option value="cm">cm</option>
-              <option value="mm">mm</option>
-              <option value="in">in</option>
-              <option value="g">g</option>
-              <option value="kg">kg</option>
-              <option value="lb">lb</option>
-            </Select>
+              onChange={(v) => setDim("unit", v)}
+              options={[
+                { value: "cm", label: "cm" },
+                { value: "mm", label: "mm" },
+                { value: "in", label: "in" },
+                { value: "g", label: "g" },
+                { value: "kg", label: "kg" },
+                { value: "lb", label: "lb" },
+              ]}
+            />
           </Field>
         </div>
       </section>

@@ -285,14 +285,15 @@ export default function FiltersPage() {
             <Field label="Data type">
               <Select
                 value={form.dataType}
-                onChange={(event) => set("dataType", event.target.value as FilterFormState["dataType"])}
-              >
-                <option value="string">String</option>
-                <option value="number">Number</option>
-                <option value="boolean">Boolean</option>
-                <option value="enum">Enum</option>
-                <option value="multiselect">Multiselect</option>
-              </Select>
+                onChange={(v) => set("dataType", v as FilterFormState["dataType"])}
+                options={[
+                  { value: "string", label: "String" },
+                  { value: "number", label: "Number" },
+                  { value: "boolean", label: "Boolean" },
+                  { value: "enum", label: "Enum" },
+                  { value: "multiselect", label: "Multiselect" },
+                ]}
+              />
             </Field>
             <Field label="Display order">
               <Input

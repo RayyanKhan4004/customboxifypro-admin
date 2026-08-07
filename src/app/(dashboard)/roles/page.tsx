@@ -236,11 +236,12 @@ export default function RolesPage() {
             <Field label="Status">
               <Select
                 value={form.status}
-                onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value as RoleFormState["status"] }))}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </Select>
+                onChange={(v) => setForm((prev) => ({ ...prev, status: v as RoleFormState["status"] }))}
+                options={[
+                  { value: "active", label: "Active" },
+                  { value: "inactive", label: "Inactive" },
+                ]}
+              />
             </Field>
           </div>
           <Field label="Description">

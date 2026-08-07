@@ -163,64 +163,65 @@ export default function ProductsPage() {
         />
         <Select
           value={filters.status}
-          onChange={(event) => {
-            setFilters((prev) => ({ ...prev, status: event.target.value }));
+          onChange={(status) => {
+            setFilters((prev) => ({ ...prev, status }));
             setPage(1);
           }}
           className="w-36"
-        >
-          <option value="">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-        </Select>
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "draft", label: "Draft" },
+            { value: "published", label: "Published" },
+            { value: "archived", label: "Archived" },
+          ]}
+        />
         <Select
           value={filters.visibility}
-          onChange={(event) => {
-            setFilters((prev) => ({ ...prev, visibility: event.target.value }));
+          onChange={(visibility) => {
+            setFilters((prev) => ({ ...prev, visibility }));
             setPage(1);
           }}
           className="w-36"
-        >
-          <option value="">All visibility</option>
-          <option value="public">Public</option>
-          <option value="internal">Internal</option>
-          <option value="hidden">Hidden</option>
-        </Select>
+          options={[
+            { value: "", label: "All visibility" },
+            { value: "public", label: "Public" },
+            { value: "internal", label: "Internal" },
+            { value: "hidden", label: "Hidden" },
+          ]}
+        />
         <Select
           value={filters.categoryId}
-          onChange={(event) => {
-            setFilters((prev) => ({ ...prev, categoryId: event.target.value }));
+          onChange={(categoryId) => {
+            setFilters((prev) => ({ ...prev, categoryId }));
             setPage(1);
           }}
           className="w-44"
-        >
-          <option value="">All categories</option>
-          {categories.data?.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </Select>
+          options={[
+            { value: "", label: "All categories" },
+            ...(categories.data?.map((category) => ({ value: category.id, label: category.name })) ?? []),
+          ]}
+        />
         <Select
           value={sortBy}
-          onChange={(event) => setSortBy(event.target.value)}
+          onChange={setSortBy}
           className="w-36"
-        >
-          <option value="updatedAt">Sort: updated</option>
-          <option value="createdAt">Sort: created</option>
-          <option value="name">Sort: name</option>
-          <option value="publishedAt">Sort: published</option>
-          <option value="featured">Sort: featured</option>
-        </Select>
+          options={[
+            { value: "updatedAt", label: "Sort: updated" },
+            { value: "createdAt", label: "Sort: created" },
+            { value: "name", label: "Sort: name" },
+            { value: "publishedAt", label: "Sort: published" },
+            { value: "featured", label: "Sort: featured" },
+          ]}
+        />
         <Select
           value={sortDir}
-          onChange={(event) => setSortDir(event.target.value as "asc" | "desc")}
+          onChange={(v) => setSortDir(v as "asc" | "desc")}
           className="w-28"
-        >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </Select>
+          options={[
+            { value: "desc", label: "Descending" },
+            { value: "asc", label: "Ascending" },
+          ]}
+        />
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Checkbox
             checked={filters.includeDeleted}

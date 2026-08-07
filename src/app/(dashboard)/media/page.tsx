@@ -137,13 +137,18 @@ export default function MediaPage() {
       />
 
       <div className="mb-4 flex items-center gap-3">
-        <Select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }} className="w-40">
-          <option value="">All statuses</option>
-          <option value="ready">Ready</option>
-          <option value="processing">Processing</option>
-          <option value="pending">Pending</option>
-          <option value="failed">Failed</option>
-        </Select>
+        <Select
+          value={status}
+          onChange={(v) => { setStatus(v); setPage(1); }}
+          className="w-40"
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "ready", label: "Ready" },
+            { value: "processing", label: "Processing" },
+            { value: "pending", label: "Pending" },
+            { value: "failed", label: "Failed" },
+          ]}
+        />
         <span className="text-sm text-muted-foreground">
           {media.data ? `${media.data.meta.total} files` : ""}
         </span>

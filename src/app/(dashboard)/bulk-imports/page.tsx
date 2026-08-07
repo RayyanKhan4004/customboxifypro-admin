@@ -171,11 +171,12 @@ export default function BulkImportsPage() {
           <Field label="Mode">
             <Select
               value={mode}
-              onChange={(event) => setMode(event.target.value as "draft" | "all-or-nothing")}
-            >
-              <option value="draft">Draft (import valid rows)</option>
-              <option value="all-or-nothing">All or nothing</option>
-            </Select>
+              onChange={(v) => setMode(v as "draft" | "all-or-nothing")}
+              options={[
+                { value: "draft", label: "Draft (import valid rows)" },
+                { value: "all-or-nothing", label: "All or nothing" },
+              ]}
+            />
           </Field>
           <Button
             type="button"
@@ -210,19 +211,20 @@ export default function BulkImportsPage() {
       <div className="mb-4 flex items-center gap-2">
         <Select
           value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(event.target.value);
+          onChange={(v) => {
+            setStatusFilter(v);
             setPage(1);
           }}
           className="w-44"
-        >
-          <option value="">All statuses</option>
-          <option value="queued">Queued</option>
-          <option value="processing">Processing</option>
-          <option value="completed">Completed</option>
-          <option value="failed">Failed</option>
-          <option value="cancelled">Cancelled</option>
-        </Select>
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "queued", label: "Queued" },
+            { value: "processing", label: "Processing" },
+            { value: "completed", label: "Completed" },
+            { value: "failed", label: "Failed" },
+            { value: "cancelled", label: "Cancelled" },
+          ]}
+        />
       </div>
 
       <Table
