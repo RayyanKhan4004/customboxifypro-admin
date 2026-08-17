@@ -2,7 +2,7 @@
 
 import { X } from "@phosphor-icons/react";
 import { clsx } from "clsx";
-import ReactSelect, { GroupBase, SingleValue } from "react-select";
+import ReactSelect, { SingleValue } from "react-select";
 import React, {
   useEffect,
   useId,
@@ -64,7 +64,7 @@ export function IconButton({
 }
 
 const inputClasses =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50";
+  "h-15 w-full rounded-xl border border-transparent bg-foreground/10 px-5 text-sm text-foreground placeholder:text-white/50 outline-none transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Input({
   className,
@@ -80,7 +80,7 @@ export function Textarea({
   return (
     <textarea
       className={clsx(
-        "w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50",
+        "min-h-30 w-full resize-none rounded-xl border border-transparent bg-foreground/10 px-5 py-5 text-sm text-foreground placeholder:text-white/50 outline-none transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -132,25 +132,52 @@ export function Select({
       styles={{
         control: (base, state) => ({
           ...base,
-          minHeight: 36,
-          height: 36,
-          borderRadius: 6,
-          borderColor: state.isFocused ? "hsl(var(--primary))" : "hsl(var(--border))",
-          boxShadow: state.isFocused ? "0 0 0 2px hsl(var(--primary) / 0.2)" : "none",
-          backgroundColor: "transparent",
+          minHeight: "3.75rem",
+          height: "3.75rem",
+          borderRadius: "0.75rem",
+          borderColor: state.isFocused ? "var(--primary)" : "transparent",
+          boxShadow: "none",
+          backgroundColor: "color-mix(in srgb, var(--foreground) 10%, transparent)",
+          cursor: "pointer",
           fontSize: 14,
+          transition: "border-color 150ms ease",
+          "&:hover": {
+            borderColor: "var(--primary)",
+          },
         }),
-        valueContainer: (base) => ({ ...base, padding: "0 8px" }),
-        singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
-        placeholder: (base) => ({ ...base, color: "hsl(var(--muted-foreground))" }),
+        valueContainer: (base) => ({ ...base, padding: "0 1.25rem" }),
+        singleValue: (base) => ({ ...base, color: "var(--foreground)" }),
+        placeholder: (base) => ({
+          ...base,
+          color: "color-mix(in srgb, var(--foreground) 50%, transparent)",
+        }),
         indicatorSeparator: () => ({ display: "none" }),
-        dropdownIndicator: (base) => ({ ...base, color: "hsl(var(--muted-foreground))", padding: 4 }),
-        menu: (base) => ({ ...base, zIndex: 50, backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 6 }),
+        dropdownIndicator: (base) => ({
+          ...base,
+          color: "var(--foreground)",
+          padding: "0 1rem 0 0",
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: 50,
+          overflow: "hidden",
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: "0.75rem",
+        }),
+        menuList: (base) => ({ ...base, padding: "0.25rem 0" }),
         option: (base, state) => ({
           ...base,
-          backgroundColor: state.isFocused ? "hsl(var(--accent))" : "transparent",
-          color: "hsl(var(--foreground))",
+          padding: "0.625rem 1rem",
+          backgroundColor: state.isFocused
+            ? "color-mix(in srgb, var(--foreground) 10%, transparent)"
+            : "transparent",
+          color: "var(--foreground)",
           fontSize: 14,
+          cursor: "pointer",
+          ":active": {
+            backgroundColor: "transparent",
+          },
         }),
       }}
     />
