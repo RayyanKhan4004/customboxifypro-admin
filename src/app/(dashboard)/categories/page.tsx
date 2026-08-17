@@ -13,6 +13,7 @@ import {
   Input,
   Modal,
   PageHeader,
+  Select,
   Spinner,
   Table,
   Textarea,
@@ -236,22 +237,18 @@ export default function CategoriesPage() {
             />
           </Field>
           <Field label="Parent category">
-            <select
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            <Select
               value={form.parentId}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, parentId: event.target.value }))
+              onChange={(parentId) =>
+                setForm((prev) => ({ ...prev, parentId }))
               }
-            >
-              <option value="">None (top level)</option>
-              {roots
-                .filter((root) => root.id !== editing?.id)
-                .map((root) => (
-                  <option key={root.id} value={root.id}>
-                    {root.name}
-                  </option>
-                ))}
-            </select>
+              options={[
+                { value: "", label: "None (top level)" },
+                ...roots
+                  .filter((root) => root.id !== editing?.id)
+                  .map((root) => ({ value: root.id, label: root.name })),
+              ]}
+            />
           </Field>
           <Field label="Sort order">
             <Input
