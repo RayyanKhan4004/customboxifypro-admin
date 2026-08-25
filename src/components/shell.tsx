@@ -6,6 +6,7 @@ import {
   FolderSimple,
   Gauge,
   ImageSquare,
+  Factory,
   Key,
   Package,
   ShieldCheck,
@@ -46,6 +47,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
       { href: "/categories", label: "Categories", icon: FolderSimple, permission: "categories.manage" },
       { href: "/filters", label: "Filters", icon: Sliders, permission: "filters.manage" },
       { href: "/media", label: "Media", icon: ImageSquare, permission: "media.manage" },
+      { href: "/industries", label: "Industries", icon: Factory, permission: "settings.manage" },
       { href: "/bulk-imports", label: "Bulk imports", icon: UploadSimple, permission: "products.bulk-import" },
     ],
   },
@@ -170,7 +172,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return null; // proxy / api client will redirect to /login
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-muted-foreground">Unable to load your session.</p>
+      </div>
+    );
   }
 
   return (

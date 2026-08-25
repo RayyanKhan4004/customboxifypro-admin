@@ -21,15 +21,47 @@ export class ApiError extends Error {
 }
 
 let refreshPromise: Promise<boolean> | null = null;
+let isRedirectingToLogin = false;
+const NON_REFRESHABLE_AUTH_PATHS = new Set([
+  "/admin/auth/login",
+  "/admin/auth/refresh",
+  "/admin/auth/logout",
+  "/admin/auth/forgot-password",
+  "/admin/auth/reset-password",
+]);
+
+async function expireClientSession(): Promise<void> {
+  if (typeof window === "undefined" || isRedirectingToLogin) return;
+  isRedirectingToLogin = true;
+  window.dispatchEvent(new Event("admin-session-expired"));
+  try {
+    await clearClientSessionCookies();
+  } finally {
+    window.location.replace("/login");
+  }
+}
+
+export async function clearClientSessionCookies(): Promise<void> {
+  await fetch("/api/auth/session/clear", {
+    method: "POST",
+    credentials: "include",
+    headers: CSRF_HEADERS,
+    keepalive: true,
+  });
+}
 
 async function refreshSession(): Promise<boolean> {
   refreshPromise ??= (async () => {
-    const res = await fetch(`${BASE}/admin/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-      headers: CSRF_HEADERS,
-    });
-    return res.ok;
+    try {
+      const res = await fetch(`${BASE}/admin/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: CSRF_HEADERS,
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   })().finally(() => {
     refreshPromise = null;
   });
@@ -90,15 +122,12 @@ async function request<T>(
     if (
       error instanceof ApiError &&
       error.statusCode === 401 &&
-      !retried &&
-      !path.startsWith("/admin/auth/")
+      !NON_REFRESHABLE_AUTH_PATHS.has(path)
     ) {
-      if (await refreshSession()) {
+      if (!retried && (await refreshSession())) {
         return request<T>(path, init, true);
       }
-      if (typeof window !== "undefined") {
-        window.location.assign("/login");
-      }
+      await expireClientSession();
     }
     throw error;
   }

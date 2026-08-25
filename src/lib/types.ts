@@ -144,6 +144,18 @@ export interface Category {
   seo: { title: string; description: string };
 }
 
+export interface Industry {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  bestFor: string;
+  specifications: string[];
+  imageKey: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface FilterDefinition {
   id: string;
   name: string;

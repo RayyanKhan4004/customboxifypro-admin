@@ -22,8 +22,13 @@ export default function LoginPage() {
     try {
       await login(email.trim(), password);
       router.replace("/dashboard");
+      router.refresh();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Login failed.");
+      setError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : "Login failed.",
+      );
     } finally {
       setBusy(false);
     }

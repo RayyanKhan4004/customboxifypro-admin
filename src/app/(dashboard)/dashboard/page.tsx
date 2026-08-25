@@ -24,7 +24,7 @@ export default function DashboardPage() {
   });
   const admins = useQuery({
     queryKey: ["dashboard", "admins"],
-    queryFn: () => apiGet<Paged<AdminRecord>>("/admin/admins?page=1&limit=1"),
+    queryFn: () => apiGet<Paged<AdminRecord>>("/admin/admins?page=1&limit=1&status=active"),
     enabled: can("admins.read"),
   });
   const audit = useQuery({

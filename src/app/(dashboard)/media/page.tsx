@@ -121,6 +121,7 @@ export default function MediaPage() {
               ref={fileInputRef}
               type="file"
               multiple
+              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               hidden
               onChange={(event) => {
                 const files = Array.from(event.target.files ?? []);

@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { ImagePicker, type ImagePickerValue } from "@/components/products/image-picker";
 import {
@@ -36,6 +39,31 @@ interface FormState {
   attributes: Record<string, string>;
   images: ImagePickerValue[];
 }
+
+const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const optionalNonNegativeNumber = z.string().refine(
+  (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
+  "Enter a non-negative number.",
+);
+
+const productFormSchema = z.object({
+  name: z.string().trim().min(2, "Name must contain at least 2 characters."),
+  slug: z.string().trim().refine((value) => !value || slugPattern.test(value), "Use lowercase letters, numbers, and hyphens only."),
+  shortDescription: z.string().max(400, "Short description cannot exceed 400 characters."),
+  description: z.string(),
+  categoryId: z.string().min(1, "Select a category."),
+  subcategoryId: z.string(),
+  status: z.enum(["draft", "published", "archived"]),
+  visibility: z.enum(["public", "internal", "hidden"]),
+  featured: z.boolean(),
+  tags: z.string(),
+  sku: z.string().max(100, "SKU cannot exceed 100 characters."),
+  moq: z.string().refine((value) => value === "" || (Number.isInteger(Number(value)) && Number(value) >= 1), "MOQ must be a whole number of at least 1."),
+  dimensions: z.object({ length: optionalNonNegativeNumber, width: optionalNonNegativeNumber, height: optionalNonNegativeNumber, weight: optionalNonNegativeNumber, unit: z.string() }),
+  seo: z.object({ title: z.string(), description: z.string(), canonicalUrl: z.string() }),
+  attributes: z.record(z.string(), z.string()),
+  images: z.array(z.object({ key: z.string(), alt: z.string(), order: z.number(), isMain: z.boolean() })).max(20, "A product can have at most 20 images."),
+});
 
 const emptyState: FormState = {
   name: "",
@@ -129,33 +157,27 @@ export function ProductForm({
   onSubmit: (payload: ProductPayload) => Promise<void>;
   onCancel?: () => void;
 }) {
-  const [state, setState] = useState<FormState>(() =>
-    initial ? fromProduct(initial) : emptyState,
-  );
+  const { formState: { errors }, handleSubmit, reset, setValue, watch } = useForm<FormState>({
+    defaultValues: initial ? fromProduct(initial) : emptyState,
+    resolver: zodResolver(productFormSchema),
+  });
+  const state = watch();
 
-  const [prevInitial, setPrevInitial] = useState(initial);
-  if (initial !== prevInitial) {
-    setPrevInitial(initial);
-    if (initial) setState(fromProduct(initial));
-  }
+  useEffect(() => {
+    reset(initial ? fromProduct(initial) : emptyState);
+  }, [initial, reset]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-    setState((prev) => ({ ...prev, [key]: value }));
+    setValue(key, value as never, { shouldDirty: true, shouldValidate: true });
 
   const setDim = (key: keyof FormState["dimensions"], value: string) =>
-    setState((prev) => ({
-      ...prev,
-      dimensions: { ...prev.dimensions, [key]: value },
-    }));
+    set("dimensions", { ...state.dimensions, [key]: value });
 
   const setSeo = (key: keyof FormState["seo"], value: string) =>
-    setState((prev) => ({
-      ...prev,
-      seo: { ...prev.seo, [key]: value },
-    }));
+    set("seo", { ...state.seo, [key]: value });
 
   const setAttribute = (key: string, value: string) =>
-    setState((prev) => ({ ...prev, attributes: { ...prev.attributes, [key]: value } }));
+    set("attributes", { ...state.attributes, [key]: value });
 
   const subcategories = useMemo(
     () =>
@@ -166,9 +188,7 @@ export function ProductForm({
     [categories, state.categoryId],
   );
 
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!state.categoryId) return;
+  const submit = async (state: FormState) => {
 
     const attributes: Record<string, unknown> = {};
     for (const def of filters) {
@@ -229,7 +249,7 @@ export function ProductForm({
     category.parentId ? "— " : "";
 
   return (
-    <form onSubmit={submit} className="space-y-6">
+    <form onSubmit={handleSubmit(submit)} className="space-y-6">
       {error && (
         <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
           {error}
@@ -239,20 +259,20 @@ export function ProductForm({
       <section className="space-y-4 rounded-lg border border-border bg-card p-5">
         <h2 className="text-sm font-semibold">Details</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Name *">
+          <Field label="Name *" error={errors.name?.message}>
             <Input
               required
               value={state.name}
               onChange={(event) => set("name", event.target.value)}
             />
           </Field>
-          <Field label="Slug" hint="Leave blank to auto-generate from the name.">
+          <Field label="Slug" hint="Leave blank to auto-generate from the name." error={errors.slug?.message}>
             <Input
               value={state.slug}
               onChange={(event) => set("slug", event.target.value)}
             />
           </Field>
-          <Field label="Category *">
+          <Field label="Category *" error={errors.categoryId?.message}>
             <Select
               required
               value={state.categoryId}
@@ -310,7 +330,7 @@ export function ProductForm({
               onChange={(event) => set("sku", event.target.value)}
             />
           </Field>
-          <Field label="MOQ (minimum order quantity)">
+          <Field label="MOQ (minimum order quantity)" error={errors.moq?.message}>
             <Input
               type="number"
               min="1"
@@ -413,7 +433,7 @@ export function ProductForm({
         <h2 className="text-sm font-semibold">Dimensions</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
           {(["length", "width", "height", "weight"] as const).map((dim) => (
-            <Field key={dim} label={dim}>
+              <Field key={dim} label={dim} error={errors.dimensions?.[dim]?.message}>
               <Input
                 type="number"
                 step="0.01"
@@ -470,7 +490,7 @@ export function ProductForm({
             Cancel
           </Button>
         )}
-        <Button type="submit" disabled={submitting || !state.categoryId}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Saving…" : "Save product"}
         </Button>
       </div>

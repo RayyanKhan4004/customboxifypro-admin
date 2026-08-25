@@ -1,4 +1,3 @@
-import { Providers } from "@/app/providers";
 import { Shell } from "@/components/shell";
 
 export default function DashboardLayout({
@@ -7,8 +6,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Providers>
-      <Shell>{children}</Shell>
-    </Providers>
+    <Shell>{children}</Shell>
   );
 }

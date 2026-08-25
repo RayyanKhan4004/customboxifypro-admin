@@ -98,6 +98,10 @@ function parseOptions(raw: string): { value: string; label: string }[] {
     });
 }
 
+function capitalizeFirst(value: string): string {
+  return value ? `${value[0].toUpperCase()}${value.slice(1)}` : value;
+}
+
 export default function FiltersPage() {
   const queryClient = useQueryClient();
   const { toast, show, dismiss } = useToast();
@@ -120,6 +124,14 @@ export default function FiltersPage() {
 
   const saveMutation = useMutation({
     mutationFn: () => {
+      const validationMin = form.validationMin === "" ? undefined : Number(form.validationMin);
+      const validationMax = form.validationMax === "" ? undefined : Number(form.validationMax);
+      if ((validationMin !== undefined && validationMin < 0) || (validationMax !== undefined && validationMax < 0)) {
+        throw new Error("Validation limits cannot be negative.");
+      }
+      if (validationMin !== undefined && validationMax !== undefined && validationMin > validationMax) {
+        throw new Error("Validation minimum cannot exceed the maximum.");
+      }
       const body = {
         name: form.name,
         label: form.label,
@@ -134,8 +146,8 @@ export default function FiltersPage() {
         displayOrder: form.displayOrder !== "" ? Number(form.displayOrder) : undefined,
         isActive: form.isActive,
         validation: {
-          min: form.validationMin !== "" ? Number(form.validationMin) : undefined,
-          max: form.validationMax !== "" ? Number(form.validationMax) : undefined,
+          min: validationMin,
+          max: validationMax,
           pattern: form.validationPattern || undefined,
           required: form.validationRequired || undefined,
         },
@@ -199,7 +211,7 @@ export default function FiltersPage() {
       />
 
       <Table
-        headers={["Name", "Key", "Data type", "Filterable", "Status", ""]}
+        headers={["Name", "Key", "Data type", "Filterable", "Status", "Actions"]}
         loading={filters.isLoading}
         empty="No filters defined."
       >
@@ -268,7 +280,7 @@ export default function FiltersPage() {
           )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Name *">
-              <Input value={form.name} onChange={(event) => set("name", event.target.value)} />
+              <Input value={form.name} onChange={(event) => set("name", capitalizeFirst(event.target.value))} />
             </Field>
             <Field label="Key *" hint={editing ? "Read-only after creation." : "Lowercase, e.g. material."}>
               <Input
@@ -330,15 +342,15 @@ export default function FiltersPage() {
           </div>
           <div className="grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-2">
             <Field label="Validation min">
-              <Input type="number" value={form.validationMin} onChange={(event) => set("validationMin", event.target.value)} />
+              <Input type="number" min="0" title="Minimum allowed value for this attribute." value={form.validationMin} onChange={(event) => set("validationMin", event.target.value)} />
             </Field>
             <Field label="Validation max">
-              <Input type="number" value={form.validationMax} onChange={(event) => set("validationMax", event.target.value)} />
+              <Input type="number" min="0" title="Maximum allowed value for this attribute." value={form.validationMax} onChange={(event) => set("validationMax", event.target.value)} />
             </Field>
             <Field label="Validation pattern">
               <Input value={form.validationPattern} onChange={(event) => set("validationPattern", event.target.value)} />
             </Field>
-            <div className="flex items-end pb-2">
+            <div className="flex items-start pt-5">
               <ToggleField label="Validation required" checked={form.validationRequired} onChange={(v) => set("validationRequired", v)} />
             </div>
           </div>

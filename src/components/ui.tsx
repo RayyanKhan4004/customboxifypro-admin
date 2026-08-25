@@ -129,6 +129,7 @@ export function Select({
       }}
       isSearchable={false}
       menuPlacement="auto"
+      menuPortalTarget={typeof document === "undefined" ? undefined : document.body}
       styles={{
         control: (base, state) => ({
           ...base,
@@ -165,6 +166,7 @@ export function Select({
           border: "1px solid var(--border)",
           borderRadius: "0.75rem",
         }),
+        menuPortal: (base) => ({ ...base, zIndex: 70 }),
         menuList: (base) => ({ ...base, padding: "0.25rem 0" }),
         option: (base, state) => ({
           ...base,

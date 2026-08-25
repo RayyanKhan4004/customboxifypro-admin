@@ -4,7 +4,7 @@ import { ImageSquare, Plus, Trash, X } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 
 import { Spinner } from "@/components/ui";
-import { uploadFile, type UploadedImage } from "@/lib/media-upload";
+import { uploadImageFile, type UploadedImage } from "@/lib/media-upload";
 
 export type ImagePickerValue = UploadedImage;
 
@@ -31,7 +31,7 @@ export function ImagePicker({
     const urls: Record<string, string> = {};
     try {
       for (const file of Array.from(files)) {
-        const uploaded = await uploadFile(file);
+        const uploaded = await uploadImageFile(file);
         urls[uploaded.key] = URL.createObjectURL(file);
         added.push({
           ...uploaded,

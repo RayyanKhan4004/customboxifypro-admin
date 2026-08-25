@@ -26,9 +26,6 @@ export function proxy(request: NextRequest) {
       request.cookies.get(REFRESH_COOKIE),
   );
 
-  if (hasAuth && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
   if (!hasAuth && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
