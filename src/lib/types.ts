@@ -152,6 +152,7 @@ export interface Industry {
   bestFor: string;
   specifications: string[];
   imageKey: string | null;
+  imageUrl: string | null;
   sortOrder: number;
   isActive: boolean;
 }
