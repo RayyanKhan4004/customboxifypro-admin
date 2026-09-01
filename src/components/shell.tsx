@@ -183,9 +183,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-card">
         <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-            B
-          </div>
+          <img
+            src="/boxify-logo.svg"
+            alt="Boxify"
+            className="h-auto w-8"
+          />
           <span className="font-semibold">Boxify Admin</span>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 py-4">

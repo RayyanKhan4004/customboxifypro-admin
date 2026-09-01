@@ -38,9 +38,11 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground">
-            B
-          </div>
+          <img
+            src="/boxify-logo.svg"
+            alt="Boxify"
+            className="mx-auto mb-3 h-auto w-12"
+          />
           <h1 className="text-xl font-semibold">Boxify Admin</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Sign in to manage your catalog
