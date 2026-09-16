@@ -118,7 +118,7 @@ function fromProduct(product: ProductDetail): FormState {
       ),
     },
     images: [...(product.images ?? [])]
-      .sort((a, b) => Number(b.isMain) - Number(a.isMain) || a.order - b.order)
+      .sort((a, b) => Number(b.isMain) - Number(a.isMain))
       .map((image, index) => ({
         key: image.key,
         alt: image.alt,
@@ -153,7 +153,29 @@ export function ProductForm({
     defaultValues: initial ? fromProduct(initial) : emptyState,
     resolver: zodResolver(productFormSchema),
   });
-  const state = useWatch({ control });
+  const watchedState = useWatch({ control });
+  const state: FormState = {
+    name: watchedState.name ?? emptyState.name,
+    shortDescription: watchedState.shortDescription ?? emptyState.shortDescription,
+    description: watchedState.description ?? emptyState.description,
+    categoryId: watchedState.categoryId ?? emptyState.categoryId,
+    subcategoryId: watchedState.subcategoryId ?? emptyState.subcategoryId,
+    status: watchedState.status ?? emptyState.status,
+    featured: watchedState.featured ?? emptyState.featured,
+    moq: watchedState.moq ?? emptyState.moq,
+    seo: {
+      title: watchedState.seo?.title ?? emptyState.seo.title,
+      description: watchedState.seo?.description ?? emptyState.seo.description,
+      canonicalUrl:
+        watchedState.seo?.canonicalUrl ?? emptyState.seo.canonicalUrl,
+    },
+    images: (watchedState.images ?? []).map((image, index) => ({
+      key: image.key ?? "",
+      alt: image.alt ?? "",
+      order: image.order ?? index,
+      isMain: image.isMain ?? index === 0,
+    })),
+  };
   const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
