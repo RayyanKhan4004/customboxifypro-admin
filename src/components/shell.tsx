@@ -11,7 +11,6 @@ import {
   Package,
   ShieldCheck,
   SignOut,
-  Sliders,
   UploadSimple,
   UsersThree,
 } from "@phosphor-icons/react";
@@ -43,26 +42,93 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: "Catalog",
     items: [
-      { href: "/products", label: "Products", icon: Package, permission: "products.read" },
-      { href: "/categories", label: "Categories", icon: FolderSimple, permission: "categories.manage" },
-      { href: "/filters", label: "Filters", icon: Sliders, permission: "filters.manage" },
-      { href: "/media", label: "Media", icon: ImageSquare, permission: "media.manage" },
-      { href: "/industries", label: "Industries", icon: Factory, permission: "settings.manage" },
-      { href: "/bulk-imports", label: "Bulk imports", icon: UploadSimple, permission: "products.bulk-import" },
+      {
+        href: "/home-page",
+        label: "Home page",
+        icon: Gauge,
+        permission: "settings.manage",
+      },
+      {
+        href: "/products",
+        label: "Products",
+        icon: Package,
+        permission: "products.read",
+      },
+      {
+        href: "/categories",
+        label: "Categories",
+        icon: FolderSimple,
+        permission: "categories.manage",
+      },
+      {
+        href: "/media",
+        label: "Media",
+        icon: ImageSquare,
+        permission: "media.manage",
+      },
+      {
+        href: "/industries",
+        label: "Industries",
+        icon: Factory,
+        permission: "settings.manage",
+      },      {
+        href: "/packaging-styles",
+        label: "Packaging styles",
+        icon: Package,
+        permission: "settings.manage",
+      },
+      {
+        href: "/bulk-imports",
+        label: "Bulk imports",
+        icon: UploadSimple,
+        permission: "products.bulk-import",
+      },
     ],
   },
   {
     title: "Operations",
     items: [
-      { href: "/requests", label: "Requests", icon: EnvelopeSimple, permission: "requests.read" },
-      { href: "/audit-logs", label: "Audit logs", icon: ClockCounterClockwise, permission: "audit-logs.read" },
+      {
+        href: "/home-page",
+        label: "Home page",
+        icon: Gauge,
+        permission: "settings.manage",
+      },
+      {
+        href: "/requests",
+        label: "Requests",
+        icon: EnvelopeSimple,
+        permission: "requests.read",
+      },
+      {
+        href: "/audit-logs",
+        label: "Audit logs",
+        icon: ClockCounterClockwise,
+        permission: "audit-logs.read",
+      },
     ],
   },
   {
     title: "Access",
     items: [
-      { href: "/roles", label: "Roles", icon: ShieldCheck, permission: "roles.manage" },
-      { href: "/admins", label: "Admins", icon: UsersThree, permission: "admins.read" },
+      {
+        href: "/home-page",
+        label: "Home page",
+        icon: Gauge,
+        permission: "settings.manage",
+      },
+      {
+        href: "/roles",
+        label: "Roles",
+        icon: ShieldCheck,
+        permission: "roles.manage",
+      },
+      {
+        href: "/admins",
+        label: "Admins",
+        icon: UsersThree,
+        permission: "admins.read",
+      },
     ],
   },
 ];
@@ -118,11 +184,7 @@ function ChangePasswordModal({
         </Button>
       }
     >
-      <form
-        id="change-password-form"
-        onSubmit={submit}
-        className="space-y-4"
-      >
+      <form id="change-password-form" onSubmit={submit} className="space-y-4">
         <Field label="Current password">
           <Input
             type="password"
@@ -174,7 +236,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Unable to load your session.</p>
+        <p className="text-sm text-muted-foreground">
+          Unable to load your session.
+        </p>
       </div>
     );
   }
@@ -183,18 +247,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-card">
         <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-          <img
-            src="/boxify-logo.svg"
-            alt="Boxify"
-            className="h-auto w-8"
-          />
+          <img src="/boxify-logo.svg" alt="Boxify" className="h-auto w-8" />
           <span className="font-semibold">Boxify Admin</span>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 py-4">
-          <Link
-            href="/dashboard"
-            className={clsxNav("/dashboard", pathname)}
-          >
+          <Link href="/dashboard" className={clsxNav("/dashboard", pathname)}>
             <Gauge size={18} weight="regular" />
             Dashboard
           </Link>
@@ -229,7 +286,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 {user.email}
               </p>
             </div>
-            <IconButton title="Change password" onClick={() => setPasswordOpen(true)}>
+            <IconButton
+              title="Change password"
+              onClick={() => setPasswordOpen(true)}
+            >
               <Key size={16} />
             </IconButton>
           </div>
@@ -256,9 +316,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
 function clsxNav(href: string, pathname: string): string {
   const active =
-    href === "/dashboard"
-      ? pathname === href
-      : pathname.startsWith(href);
+    href === "/dashboard" ? pathname === href : pathname.startsWith(href);
   return active
     ? "flex items-center gap-2.5 rounded-md bg-primary/15 px-3 py-2 text-sm font-medium text-primary"
     : "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";

@@ -6,14 +6,16 @@ import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { ProductForm } from "@/components/products/product-form";
-import { Button, Card, PageHeader, Spinner, ToastHost, useToast } from "@/components/ui";
+import {
+  Button,
+  Card,
+  PageHeader,
+  Spinner,
+  ToastHost,
+  useToast,
+} from "@/components/ui";
 import { apiGet, apiPatch } from "@/lib/api";
-import type {
-  Category,
-  FilterDefinition,
-  ProductDetail,
-  ProductPayload,
-} from "@/lib/types";
+import type { Category, ProductDetail, ProductPayload } from "@/lib/types";
 
 export function EditProductClient({ id }: { id: string }) {
   const router = useRouter();
@@ -30,15 +32,13 @@ export function EditProductClient({ id }: { id: string }) {
     queryKey: ["categories"],
     queryFn: () => apiGet<Category[]>("/admin/categories"),
   });
-  const filters = useQuery({
-    queryKey: ["filters"],
-    queryFn: () => apiGet<FilterDefinition[]>("/admin/filters"),
-  });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: ProductPayload) => apiPatch(`/admin/products/${id}`, payload),
+    mutationFn: (payload: ProductPayload) =>
+      apiPatch(`/admin/products/${id}`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["product", id] });
       show.success("Product saved.");
       router.push("/products");
     },
@@ -54,7 +54,7 @@ export function EditProductClient({ id }: { id: string }) {
     );
   }
 
-  if (product.isLoading || categories.isLoading || filters.isLoading) {
+  if (product.isLoading || categories.isLoading) {
     return (
       <div className="flex justify-center py-16">
         <Spinner className="h-6 w-6 text-muted-foreground" />
@@ -86,17 +86,30 @@ export function EditProductClient({ id }: { id: string }) {
           <Row label="Visibility" value={detail.visibility} />
           <Row label="MOQ" value={detail.moq ? String(detail.moq) : "—"} />
           <div>
-            <p className="text-xs font-medium text-muted-foreground">Short description</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Short description
+            </p>
             <p className="mt-1">{detail.shortDescription || "—"}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground">Description</p>
-            <p className="mt-1 whitespace-pre-wrap">{detail.description || "—"}</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Description
+            </p>
+            <p className="mt-1 whitespace-pre-wrap">
+              {detail.description || "—"}
+            </p>
           </div>
         </Card>
       </div>
     );
   }
+
+  if (categories.isError)
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        {categories.error.message}
+      </p>
+    );
 
   return (
     <div>
@@ -115,7 +128,6 @@ export function EditProductClient({ id }: { id: string }) {
         <ProductForm
           initial={product.data}
           categories={categories.data ?? []}
-          filters={filters.data ?? []}
           submitting={updateMutation.isPending}
           error={formError}
           onSubmit={(payload) =>

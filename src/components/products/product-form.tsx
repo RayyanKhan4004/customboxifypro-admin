@@ -1,11 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
-import { ImagePicker, type ImagePickerValue } from "@/components/products/image-picker";
+import {
+  ImagePicker,
+  type ImagePickerValue,
+} from "@/components/products/image-picker";
 import {
   Button,
   Field,
@@ -14,82 +17,78 @@ import {
   Textarea,
   Toggle,
 } from "@/components/ui";
-import type {
-  Category,
-  FilterDefinition,
-  ProductDetail,
-  ProductPayload,
-} from "@/lib/types";
+import type { Category, ProductDetail, ProductPayload } from "@/lib/types";
 
 interface FormState {
   name: string;
-  slug: string;
   shortDescription: string;
   description: string;
   categoryId: string;
   subcategoryId: string;
   status: "draft" | "published" | "archived";
-  visibility: "public" | "internal" | "hidden";
   featured: boolean;
-  tags: string;
-  sku: string;
   moq: string;
-  dimensions: { length: string; width: string; height: string; weight: string; unit: string };
   seo: { title: string; description: string; canonicalUrl: string };
-  attributes: Record<string, string>;
   images: ImagePickerValue[];
 }
 
-const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const optionalNonNegativeNumber = z.string().refine(
-  (value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
-  "Enter a non-negative number.",
-);
-
 const productFormSchema = z.object({
   name: z.string().trim().min(2, "Name must contain at least 2 characters."),
-  slug: z.string().trim().refine((value) => !value || slugPattern.test(value), "Use lowercase letters, numbers, and hyphens only."),
-  shortDescription: z.string().max(400, "Short description cannot exceed 400 characters."),
+  shortDescription: z
+    .string()
+    .max(400, "Short description cannot exceed 400 characters."),
   description: z.string(),
   categoryId: z.string().min(1, "Select a category."),
   subcategoryId: z.string(),
   status: z.enum(["draft", "published", "archived"]),
-  visibility: z.enum(["public", "internal", "hidden"]),
   featured: z.boolean(),
-  tags: z.string(),
-  sku: z.string().max(100, "SKU cannot exceed 100 characters."),
-  moq: z.string().refine((value) => value === "" || (Number.isInteger(Number(value)) && Number(value) >= 1), "MOQ must be a whole number of at least 1."),
-  dimensions: z.object({ length: optionalNonNegativeNumber, width: optionalNonNegativeNumber, height: optionalNonNegativeNumber, weight: optionalNonNegativeNumber, unit: z.string() }),
-  seo: z.object({ title: z.string(), description: z.string(), canonicalUrl: z.string() }),
-  attributes: z.record(z.string(), z.string()),
-  images: z.array(z.object({ key: z.string(), alt: z.string(), order: z.number(), isMain: z.boolean() })).max(20, "A product can have at most 20 images."),
+  moq: z
+    .string()
+    .refine(
+      (value) =>
+        value === "" ||
+        (Number.isSafeInteger(Number(value)) && Number(value) >= 1),
+      "MOQ must be a whole number of at least 1.",
+    ),
+  seo: z.object({
+    title: z.string(),
+    description: z.string(),
+    canonicalUrl: z
+      .string()
+      .trim()
+      .refine((value) => {
+        if (!value) return true;
+        try {
+          return ["https:", "http:"].includes(new URL(value).protocol);
+        } catch {
+          return false;
+        }
+      }, "Enter a valid HTTP or HTTPS URL."),
+  }),
+  images: z
+    .array(
+      z.object({
+        key: z.string(),
+        alt: z.string(),
+        order: z.number(),
+        isMain: z.boolean(),
+      }),
+    )
+    .max(20, "A product can have at most 20 images."),
 });
 
 const emptyState: FormState = {
   name: "",
-  slug: "",
   shortDescription: "",
   description: "",
   categoryId: "",
   subcategoryId: "",
   status: "draft",
-  visibility: "public",
   featured: false,
-  tags: "",
-  sku: "",
   moq: "",
-  dimensions: { length: "", width: "", height: "", weight: "", unit: "cm" },
   seo: { title: "", description: "", canonicalUrl: "" },
-  attributes: {},
   images: [],
 };
-
-function attributeToInput(def: FilterDefinition, value: unknown): string {
-  if (Array.isArray(value)) return value.join(",");
-  if (typeof value === "boolean") return value ? "true" : "false";
-  if (value === null || value === undefined) return "";
-  return String(value);
-}
 
 function existingUrls(product?: ProductDetail): Record<string, string> {
   const urls: Record<string, string> = {};
@@ -102,48 +101,36 @@ function existingUrls(product?: ProductDetail): Record<string, string> {
 function fromProduct(product: ProductDetail): FormState {
   return {
     name: product.name,
-    slug: product.slug,
     shortDescription: product.shortDescription ?? "",
     description: product.description ?? "",
     categoryId: product.categoryId,
     subcategoryId: product.subcategoryId ?? "",
     status: product.status,
-    visibility: product.visibility,
     featured: product.featured,
-    tags: (product.tags ?? []).join(", "),
-    sku: product.sku ?? "",
     moq: product.moq ? String(product.moq) : "",
-    dimensions: {
-      length: String((product.dimensions as { length?: number })?.length ?? ""),
-      width: String((product.dimensions as { width?: number })?.width ?? ""),
-      height: String((product.dimensions as { height?: number })?.height ?? ""),
-      weight: String((product.dimensions as { weight?: number })?.weight ?? ""),
-      unit: String((product.dimensions as { unit?: string })?.unit ?? "cm"),
-    },
     seo: {
       title: String((product.seo as { title?: string })?.title ?? ""),
-      description: String((product.seo as { description?: string })?.description ?? ""),
-      canonicalUrl: String((product.seo as { canonicalUrl?: string })?.canonicalUrl ?? ""),
+      description: String(
+        (product.seo as { description?: string })?.description ?? "",
+      ),
+      canonicalUrl: String(
+        (product.seo as { canonicalUrl?: string })?.canonicalUrl ?? "",
+      ),
     },
-    attributes: Object.fromEntries(
-      Object.entries(product.attributes ?? {}).map(([key, value]) => [
-        key,
-        attributeToInput({ key, dataType: "string" } as FilterDefinition, value),
-      ]),
-    ),
-    images: (product.images ?? []).map((image, index) => ({
-      key: image.key,
-      alt: image.alt,
-      order: index,
-      isMain: image.isMain,
-    })),
+    images: [...(product.images ?? [])]
+      .sort((a, b) => Number(b.isMain) - Number(a.isMain) || a.order - b.order)
+      .map((image, index) => ({
+        key: image.key,
+        alt: image.alt,
+        order: index,
+        isMain: image.isMain,
+      })),
   };
 }
 
 export function ProductForm({
   initial,
   categories,
-  filters,
   submitting,
   error,
   onSubmit,
@@ -151,17 +138,23 @@ export function ProductForm({
 }: {
   initial?: ProductDetail;
   categories: Category[];
-  filters: FilterDefinition[];
   submitting: boolean;
   error?: string | null;
   onSubmit: (payload: ProductPayload) => Promise<void>;
   onCancel?: () => void;
 }) {
-  const { formState: { errors }, handleSubmit, reset, setValue, watch } = useForm<FormState>({
+  const {
+    formState: { errors },
+    handleSubmit,
+    reset,
+    setValue,
+    control,
+  } = useForm<FormState>({
     defaultValues: initial ? fromProduct(initial) : emptyState,
     resolver: zodResolver(productFormSchema),
   });
-  const state = watch();
+  const state = useWatch({ control });
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     reset(initial ? fromProduct(initial) : emptyState);
@@ -170,14 +163,8 @@ export function ProductForm({
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setValue(key, value as never, { shouldDirty: true, shouldValidate: true });
 
-  const setDim = (key: keyof FormState["dimensions"], value: string) =>
-    set("dimensions", { ...state.dimensions, [key]: value });
-
   const setSeo = (key: keyof FormState["seo"], value: string) =>
     set("seo", { ...state.seo, [key]: value });
-
-  const setAttribute = (key: string, value: string) =>
-    set("attributes", { ...state.attributes, [key]: value });
 
   const subcategories = useMemo(
     () =>
@@ -189,26 +176,7 @@ export function ProductForm({
   );
 
   const submit = async (state: FormState) => {
-
-    const attributes: Record<string, unknown> = {};
-    for (const def of filters) {
-      const raw = state.attributes[def.key];
-      if (raw === undefined || raw.trim() === "") continue;
-      if (def.dataType === "number") attributes[def.key] = Number(raw);
-      else if (def.dataType === "boolean") attributes[def.key] = raw === "true";
-      else if (def.dataType === "multiselect")
-        attributes[def.key] = raw
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean);
-      else attributes[def.key] = raw;
-    }
-
-    const dimensions: Record<string, unknown> = {};
-    for (const key of ["length", "width", "height", "weight"] as const) {
-      if (state.dimensions[key] !== "") dimensions[key] = Number(state.dimensions[key]);
-    }
-    if (state.dimensions.unit) dimensions.unit = state.dimensions.unit;
+    if (uploadingImages || submitting) return;
 
     const seo: Record<string, unknown> = {};
     if (state.seo.title) seo.title = state.seo.title;
@@ -217,29 +185,20 @@ export function ProductForm({
 
     const payload: ProductPayload = {
       name: state.name,
-      slug: state.slug.trim() || undefined,
-      shortDescription: state.shortDescription.trim() || undefined,
-      description: state.description || undefined,
+      shortDescription: state.shortDescription.trim(),
+      description: state.description,
       categoryId: state.categoryId,
-      subcategoryId: state.subcategoryId || undefined,
+      subcategoryId: state.subcategoryId,
       status: state.status,
-      visibility: state.visibility,
       featured: state.featured,
-      tags: state.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      sku: state.sku.trim() || undefined,
-      moq: state.moq !== "" ? Number(state.moq) : undefined,
+      moq: state.moq !== "" ? Number(state.moq) : null,
       images: state.images.map((image, index) => ({
         key: image.key,
         alt: image.alt,
         order: index,
         isMain: index === 0,
       })),
-      attributes,
-      dimensions: Object.keys(dimensions).length ? dimensions : undefined,
-      seo: Object.keys(seo).length ? seo : undefined,
+      seo,
     };
     if (initial) payload.version = initial.version;
     await onSubmit(payload);
@@ -250,250 +209,162 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-6">
-      {error && (
-        <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-          {error}
-        </div>
-      )}
-
-      <section className="space-y-4 rounded-lg border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">Details</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Name *" error={errors.name?.message}>
-            <Input
-              required
-              value={state.name}
-              onChange={(event) => set("name", event.target.value)}
-            />
-          </Field>
-          <Field label="Slug" hint="Leave blank to auto-generate from the name." error={errors.slug?.message}>
-            <Input
-              value={state.slug}
-              onChange={(event) => set("slug", event.target.value)}
-            />
-          </Field>
-          <Field label="Category *" error={errors.categoryId?.message}>
-            <Select
-              required
-              value={state.categoryId}
-              onChange={(v) => {
-                set("categoryId", v);
-                set("subcategoryId", "");
-              }}
-              options={[
-                { value: "", label: "Select a category" },
-                ...categories
-                  .filter((category) => category.isActive && !category.parentId)
-                  .map((category) => ({ value: category.id, label: category.name })),
-              ]}
-            />
-          </Field>
-          <Field label="Subcategory">
-            <Select
-              value={state.subcategoryId}
-              onChange={(v) => set("subcategoryId", v)}
-              disabled={subcategories.length === 0}
-              options={[
-                { value: "", label: "None" },
-                ...subcategories.map((category) => ({
-                  value: category.id,
-                  label: `${indentCategories(category)}${category.name}`,
-                })),
-              ]}
-            />
-          </Field>
-          <Field label="Status">
-            <Select
-              value={state.status}
-              onChange={(v) => set("status", v as FormState["status"])}
-              options={[
-                { value: "draft", label: "Draft" },
-                { value: "published", label: "Published" },
-                { value: "archived", label: "Archived" },
-              ]}
-            />
-          </Field>
-          <Field label="Visibility">
-            <Select
-              value={state.visibility}
-              onChange={(v) => set("visibility", v as FormState["visibility"])}
-              options={[
-                { value: "public", label: "Public" },
-                { value: "internal", label: "Internal" },
-                { value: "hidden", label: "Hidden" },
-              ]}
-            />
-          </Field>
-          <Field label="SKU">
-            <Input
-              value={state.sku}
-              onChange={(event) => set("sku", event.target.value)}
-            />
-          </Field>
-          <Field label="MOQ (minimum order quantity)" error={errors.moq?.message}>
-            <Input
-              type="number"
-              min="1"
-              value={state.moq}
-              onChange={(event) => set("moq", event.target.value)}
-            />
-          </Field>
-          <Field label="Tags" hint="Comma separated.">
-            <Input
-              value={state.tags}
-              onChange={(event) => set("tags", event.target.value)}
-            />
-          </Field>
-        </div>
-        <div className="flex items-center gap-2">
-          <Toggle
-            checked={state.featured}
-            onChange={(featured) => set("featured", featured)}
-            label="Featured"
-          />
-          <span className="text-sm">Featured product</span>
-        </div>
-        <Field label="Short description">
-          <Textarea
-            rows={2}
-            value={state.shortDescription}
-            onChange={(event) => set("shortDescription", event.target.value)}
-          />
-        </Field>
-        <Field label="Description">
-          <Textarea
-            rows={6}
-            value={state.description}
-            onChange={(event) => set("description", event.target.value)}
-          />
-        </Field>
-      </section>
-
-      <section className="space-y-4 rounded-lg border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">Images</h2>
-        <ImagePicker
-          value={state.images}
-          onChange={(images) => set("images", images)}
-          existingUrls={initial ? existingUrls(initial) : {}}
-        />
-      </section>
-
-      {filters.length > 0 && (
-        <section className="space-y-4 rounded-lg border border-border bg-card p-5">
-          <h2 className="text-sm font-semibold">Attributes</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {filters.map((def) => (
-              <Field
-                key={def.key}
-                label={`${def.label}${def.required ? " *" : ""}`}
-                hint={
-                  def.dataType === "multiselect" && def.options.length
-                    ? `Options: ${def.options.map((option) => option.value).join(", ")}`
-                    : undefined
-                }
-              >
-                {def.dataType === "boolean" ? (
-                  <Select
-                    value={state.attributes[def.key] ?? ""}
-                    onChange={(v) => setAttribute(def.key, v)}
-                    options={[
-                      { value: "", label: "—" },
-                      { value: "true", label: "Yes" },
-                      { value: "false", label: "No" },
-                    ]}
-                  />
-                ) : def.dataType === "enum" && def.options.length ? (
-                  <Select
-                    value={state.attributes[def.key] ?? ""}
-                    onChange={(v) => setAttribute(def.key, v)}
-                    options={[
-                      { value: "", label: "—" },
-                      ...def.options.map((option) => ({ value: option.value, label: option.label || option.value })),
-                    ]}
-                  />
-                ) : def.dataType === "number" ? (
-                  <Input
-                    type="number"
-                    value={state.attributes[def.key] ?? ""}
-                    onChange={(event) => setAttribute(def.key, event.target.value)}
-                  />
-                ) : (
-                  <Input
-                    value={state.attributes[def.key] ?? ""}
-                    onChange={(event) => setAttribute(def.key, event.target.value)}
-                  />
-                )}
-              </Field>
-            ))}
+      <fieldset disabled={submitting} className="space-y-6">
+        {error && (
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            {error}
           </div>
-        </section>
-      )}
+        )}
 
-      <section className="space-y-4 rounded-lg border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">Dimensions</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-          {(["length", "width", "height", "weight"] as const).map((dim) => (
-              <Field key={dim} label={dim} error={errors.dimensions?.[dim]?.message}>
+        <section className="space-y-4 rounded-lg border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold">Details</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Name *" error={errors.name?.message}>
               <Input
-                type="number"
-                step="0.01"
-                value={state.dimensions[dim]}
-                onChange={(event) => setDim(dim, event.target.value)}
+                required
+                value={state.name}
+                onChange={(event) => set("name", event.target.value)}
               />
             </Field>
-          ))}
-          <Field label="Unit">
-            <Select
-              value={state.dimensions.unit}
-              onChange={(v) => setDim("unit", v)}
-              options={[
-                { value: "cm", label: "cm" },
-                { value: "mm", label: "mm" },
-                { value: "in", label: "in" },
-                { value: "g", label: "g" },
-                { value: "kg", label: "kg" },
-                { value: "lb", label: "lb" },
-              ]}
+            <Field label="Category *" error={errors.categoryId?.message}>
+              <Select
+                required
+                value={state.categoryId}
+                onChange={(v) => {
+                  set("categoryId", v);
+                  set("subcategoryId", "");
+                }}
+                options={[
+                  { value: "", label: "Select a category" },
+                  ...categories
+                    .filter(
+                      (category) => category.isActive && !category.parentId,
+                    )
+                    .map((category) => ({
+                      value: category.id,
+                      label: category.name,
+                    })),
+                ]}
+              />
+            </Field>
+            <Field label="Subcategory">
+              <Select
+                value={state.subcategoryId}
+                onChange={(v) => set("subcategoryId", v)}
+                disabled={subcategories.length === 0}
+                options={[
+                  { value: "", label: "None" },
+                  ...subcategories.map((category) => ({
+                    value: category.id,
+                    label: `${indentCategories(category)}${category.name}`,
+                  })),
+                ]}
+              />
+            </Field>
+            <Field label="Status">
+              <Select
+                value={state.status}
+                onChange={(v) => set("status", v as FormState["status"])}
+                options={[
+                  { value: "draft", label: "Draft" },
+                  { value: "published", label: "Published" },
+                  { value: "archived", label: "Archived" },
+                ]}
+              />
+            </Field>
+            <Field
+              label="MOQ (minimum order quantity)"
+              error={errors.moq?.message}
+            >
+              <Input
+                type="number"
+                min="1"
+                value={state.moq}
+                onChange={(event) => set("moq", event.target.value)}
+              />
+            </Field>
+          </div>
+          <div className="flex items-center gap-2">
+            <Toggle
+              checked={state.featured}
+              onChange={(featured) => set("featured", featured)}
+              label="Featured"
             />
-          </Field>
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-lg border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold">SEO</h2>
-        <div className="grid grid-cols-1 gap-4">
-          <Field label="SEO title">
-            <Input
-              value={state.seo.title}
-              onChange={(event) => setSeo("title", event.target.value)}
-            />
-          </Field>
-          <Field label="SEO description">
+            <span className="text-sm">Featured product</span>
+          </div>
+          <Field
+            label="Short description"
+            error={errors.shortDescription?.message}
+          >
             <Textarea
               rows={2}
-              value={state.seo.description}
-              onChange={(event) => setSeo("description", event.target.value)}
+              value={state.shortDescription}
+              onChange={(event) => set("shortDescription", event.target.value)}
             />
           </Field>
-          <Field label="Canonical URL">
-            <Input
-              value={state.seo.canonicalUrl}
-              onChange={(event) => setSeo("canonicalUrl", event.target.value)}
+          <Field label="Description">
+            <Textarea
+              rows={6}
+              value={state.description}
+              onChange={(event) => set("description", event.target.value)}
             />
           </Field>
-        </div>
-      </section>
+        </section>
 
-      <div className="flex justify-end gap-2">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+        <section className="space-y-4 rounded-lg border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold">Images</h2>
+          <ImagePicker
+            onUploadingChange={setUploadingImages}
+            value={state.images}
+            onChange={(images) => set("images", images)}
+            existingUrls={initial ? existingUrls(initial) : {}}
+          />
+        </section>
+
+        <details
+          className="space-y-4 rounded-lg border border-border bg-card p-5"
+          open={errors.seo ? true : undefined}
+        >
+          <summary className="cursor-pointer text-sm font-semibold">
+            SEO settings (optional)
+          </summary>
+          <div className="grid grid-cols-1 gap-4">
+            <Field label="SEO title">
+              <Input
+                value={state.seo.title}
+                onChange={(event) => setSeo("title", event.target.value)}
+              />
+            </Field>
+            <Field label="SEO description">
+              <Textarea
+                rows={2}
+                value={state.seo.description}
+                onChange={(event) => setSeo("description", event.target.value)}
+              />
+            </Field>
+            <Field
+              label="Canonical URL"
+              error={errors.seo?.canonicalUrl?.message}
+            >
+              <Input
+                value={state.seo.canonicalUrl}
+                onChange={(event) => setSeo("canonicalUrl", event.target.value)}
+              />
+            </Field>
+          </div>
+        </details>
+
+        <div className="flex justify-end gap-2">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={submitting || uploadingImages}>
+            {submitting ? "Saving…" : "Save product"}
           </Button>
-        )}
-        <Button type="submit" disabled={submitting}>
-          {submitting ? "Saving…" : "Save product"}
-        </Button>
-      </div>
+        </div>
+      </fieldset>
     </form>
   );
 }

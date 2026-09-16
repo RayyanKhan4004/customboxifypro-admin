@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "@phosphor-icons/react";
+import { XIcon } from "@phosphor-icons/react";
 import { clsx } from "clsx";
 import ReactSelect, { SingleValue } from "react-select";
 import React, {
@@ -119,7 +119,7 @@ export function Select({
       className={clsx("text-sm", className)}
       classNamePrefix="rs"
       isDisabled={disabled}
-      placeholder={placeholder ?? "Select…"}
+      placeholder={placeholder ?? "SelectÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦"}
       options={options}
       value={selected}
       onChange={(option) => {
@@ -455,7 +455,7 @@ export function Modal({
         <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
           <h2 className="text-sm font-semibold">{title}</h2>
           <IconButton onClick={onClose} aria-label="Close">
-            <X className="h-4 w-4" />
+            <XIcon className="h-4 w-4" />
           </IconButton>
         </div>
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
@@ -635,7 +635,7 @@ export function Toast({
         className="text-current/70 hover:text-current"
         aria-label="Dismiss"
       >
-        <X className="h-3.5 w-3.5" />
+        <span aria-hidden="true" className="text-base leading-none">Ã—</span>
       </button>
     </div>
   );

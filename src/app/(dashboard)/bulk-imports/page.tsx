@@ -11,6 +11,7 @@ import {
   Field,
   Modal,
   PageHeader,
+  Pagination,
   Select,
   Spinner,
   Table,
@@ -30,7 +31,10 @@ import type { BulkImport, Paged } from "@/lib/types";
 
 type ImportStatus = BulkImport["status"];
 
-const statusTone: Record<ImportStatus, "muted" | "info" | "success" | "danger" | "warning"> = {
+const statusTone: Record<
+  ImportStatus,
+  "muted" | "info" | "success" | "danger" | "warning"
+> = {
   queued: "warning",
   processing: "info",
   completed: "success",
@@ -55,11 +59,13 @@ export default function BulkImportsPage() {
   const [page, setPage] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [validating, setValidating] = useState(false);
-  const [validateResult, setValidateResult] = useState<{
-    valid: boolean;
-    totalRows: number;
-    errorCount: number;
-  } | null>(null);
+  const [validateResult, setValidateResult] = useState<
+    | (Omit<ImportErrors, "successCount"> & {
+        valid: boolean;
+        totalRows: number;
+      })
+    | null
+  >(null);
   const [errorsFor, setErrorsFor] = useState<BulkImport | null>(null);
 
   const imports = useQuery({
@@ -79,11 +85,13 @@ export default function BulkImportsPage() {
 
   const errorsQuery = useQuery({
     queryKey: ["bulk-import-errors", errorsFor?._id],
-    queryFn: () => apiGet<ImportErrors>(`/admin/bulk-imports/${errorsFor?._id}/errors`),
+    queryFn: () =>
+      apiGet<ImportErrors>(`/admin/bulk-imports/${errorsFor?._id}/errors`),
     enabled: Boolean(errorsFor),
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["bulk-imports"] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["bulk-imports"] });
 
   const retryMutation = useMutation({
     mutationFn: (id: string) => apiPost(`/admin/bulk-imports/${id}/retry`),
@@ -91,7 +99,8 @@ export default function BulkImportsPage() {
       invalidate();
       show.success("Import re-queued.");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Retry failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Retry failed."),
   });
 
   const cancelMutation = useMutation({
@@ -100,12 +109,13 @@ export default function BulkImportsPage() {
       invalidate();
       show.success("Import cancelled.");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Cancel failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Cancel failed."),
   });
 
   const handleUpload = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!selectedFile) return;
+    if (!selectedFile || uploading || validating) return;
     setUploading(true);
     setValidateResult(null);
     try {
@@ -125,7 +135,7 @@ export default function BulkImportsPage() {
   };
 
   const handleValidate = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || uploading || validating) return;
     setValidating(true);
     setValidateResult(null);
     try {
@@ -135,6 +145,7 @@ export default function BulkImportsPage() {
         valid: boolean;
         totalRows: number;
         errorCount: number;
+        errors: ImportErrors["errors"];
       }>("/admin/bulk-imports/validate", formData);
       setValidateResult(result);
     } catch (err) {
@@ -144,13 +155,41 @@ export default function BulkImportsPage() {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValidateResult(null);
+    const file = event.target.files?.[0] ?? null;
+    if (
+      file &&
+      (!/\.(csv|xlsx|xls|zip)$/i.test(file.name) ||
+        file.size === 0 ||
+        file.size > 20 * 1024 * 1024)
+    ) {
+      show.error("Choose a non-empty CSV, Excel, or ZIP file up to 20 MB.");
+      setSelectedFile(null);
+      event.target.value = "";
+      return;
+    }
+    setSelectedFile(file);
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadCsv(
+        "/admin/bulk-imports/template",
+        "products-import-template.csv",
+      );
+    } catch (error) {
+      show.error(error instanceof Error ? error.message : "Download failed.");
+    }
+  };
+
   return (
     <div>
       <PageHeader
         title="Bulk imports"
-        description="Import products from a CSV file. Download the template to get the right columns."
+        description="Import products from CSV, Excel, or ZIP files up to 20 MB. Download the template for the required columns."
         actions={
-          <Button variant="outline" onClick={() => downloadCsv("/admin/bulk-imports/template", "products-import-template.csv")}>
+          <Button variant="outline" onClick={handleDownloadTemplate}>
             <DownloadSimple size={16} />
             Download template
           </Button>
@@ -158,13 +197,17 @@ export default function BulkImportsPage() {
       />
 
       <Card className="mb-6 p-5">
-        <form onSubmit={handleUpload} className="flex flex-wrap items-end gap-4">
-          <Field label="CSV file">
+        <form
+          onSubmit={handleUpload}
+          className="flex flex-wrap items-end gap-4"
+        >
+          <Field label="Import file">
             <input
               ref={fileRef}
               type="file"
               accept=".csv,.xlsx,.xls,.zip"
-              onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+              onChange={handleFileChange}
+              disabled={uploading || validating}
               className="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm file:text-foreground hover:file:bg-secondary"
             />
           </Field>
@@ -181,13 +224,21 @@ export default function BulkImportsPage() {
           <Button
             type="button"
             variant="outline"
-            disabled={!selectedFile || validating}
+            disabled={!selectedFile || validating || uploading}
             onClick={handleValidate}
           >
             {validating ? <Spinner /> : null}
             Validate
           </Button>
-          <Button type="submit" disabled={!selectedFile || uploading}>
+          <Button
+            type="submit"
+            disabled={
+              !selectedFile ||
+              uploading ||
+              validating ||
+              (mode === "all-or-nothing" && validateResult?.valid === false)
+            }
+          >
             {uploading ? <Spinner /> : null}
             <UploadSimple size={16} />
             Import
@@ -205,6 +256,16 @@ export default function BulkImportsPage() {
               ? `Valid — ${validateResult.totalRows} rows look good.`
               : `Invalid — ${validateResult.errorCount} of ${validateResult.totalRows} rows have errors. Fix them before importing.`}
           </div>
+        )}
+        {validateResult && !validateResult.valid && (
+          <ul className="mt-3 max-h-60 overflow-auto text-sm text-destructive">
+            {validateResult.errors.map((error, index) => (
+              <li key={index}>
+                Row {error.row ?? "?"}
+                {error.field ? ` (${error.field})` : ""}: {error.message}
+              </li>
+            ))}
+          </ul>
         )}
       </Card>
 
@@ -228,7 +289,15 @@ export default function BulkImportsPage() {
       </div>
 
       <Table
-        headers={["File", "Mode", "Status", "Progress", "Result", "Created", ""]}
+        headers={[
+          "File",
+          "Mode",
+          "Status",
+          "Progress",
+          "Result",
+          "Created",
+          "",
+        ]}
         loading={imports.isLoading}
         empty="No imports yet."
       >
@@ -237,9 +306,13 @@ export default function BulkImportsPage() {
             <td className="max-w-[220px] truncate px-4 py-2.5 font-medium">
               {importItem.fileName}
             </td>
-            <td className="px-4 py-2.5 text-muted-foreground">{importItem.mode}</td>
+            <td className="px-4 py-2.5 text-muted-foreground">
+              {importItem.mode}
+            </td>
             <td className="px-4 py-2.5">
-              <Badge tone={statusTone[importItem.status]}>{importItem.status}</Badge>
+              <Badge tone={statusTone[importItem.status]}>
+                {importItem.status}
+              </Badge>
             </td>
             <td className="px-4 py-2.5 text-muted-foreground">
               {importItem.totalRows > 0
@@ -247,9 +320,13 @@ export default function BulkImportsPage() {
                 : "—"}
             </td>
             <td className="px-4 py-2.5 text-muted-foreground">
-              <span className="text-emerald-400">{importItem.successCount} ok</span>
+              <span className="text-emerald-400">
+                {importItem.successCount} ok
+              </span>
               {importItem.errorCount > 0 && (
-                <span className="ml-1 text-red-400">{importItem.errorCount} err</span>
+                <span className="ml-1 text-red-400">
+                  {importItem.errorCount} err
+                </span>
               )}
             </td>
             <td className="px-4 py-2.5 text-muted-foreground">
@@ -258,7 +335,11 @@ export default function BulkImportsPage() {
             <td className="px-2 py-2.5 text-right">
               <div className="flex items-center justify-end gap-1">
                 {importItem.errorCount > 0 && (
-                  <Button size="sm" variant="outline" onClick={() => setErrorsFor(importItem)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setErrorsFor(importItem)}
+                  >
                     Errors
                   </Button>
                 )}
@@ -267,19 +348,32 @@ export default function BulkImportsPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() =>
-                      downloadCsv(`/admin/bulk-imports/${importItem._id}/error-file`, "import-errors.csv")
+                      downloadCsv(
+                        `/admin/bulk-imports/${importItem._id}/error-file`,
+                        "import-errors.csv",
+                      )
                     }
                   >
                     <DownloadSimple size={14} />
                   </Button>
                 )}
-                {(importItem.status === "queued" || importItem.status === "processing") && (
-                  <Button size="sm" variant="outline" onClick={() => cancelMutation.mutate(importItem._id)}>
+                {(importItem.status === "queued" ||
+                  importItem.status === "processing") && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => cancelMutation.mutate(importItem._id)}
+                  >
                     Cancel
                   </Button>
                 )}
-                {(importItem.status === "failed" || importItem.status === "cancelled") && (
-                  <Button size="sm" variant="outline" onClick={() => retryMutation.mutate(importItem._id)}>
+                {(importItem.status === "failed" ||
+                  importItem.status === "cancelled") && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => retryMutation.mutate(importItem._id)}
+                  >
                     Retry
                   </Button>
                 )}
@@ -288,6 +382,17 @@ export default function BulkImportsPage() {
           </tr>
         ))}
       </Table>
+
+      {imports.isError && (
+        <p role="alert" className="mt-3 text-sm text-destructive">
+          {imports.error.message}
+        </p>
+      )}
+      <Pagination
+        page={page}
+        totalPages={imports.data?.meta.totalPages ?? 1}
+        onPage={setPage}
+      />
 
       <Modal
         open={Boolean(errorsFor)}
@@ -319,7 +424,9 @@ export default function BulkImportsPage() {
                   {(errorsQuery.data?.errors ?? []).map((error, index) => (
                     <tr key={index}>
                       <td className="px-3 py-2">{error.row ?? "—"}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{error.field ?? "—"}</td>
+                      <td className="px-3 py-2 font-mono text-xs">
+                        {error.field ?? "—"}
+                      </td>
                       <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
                         {error.code}
                       </td>

@@ -94,7 +94,7 @@ export interface ProductPayload {
   images?: ProductImageInput[];
   attributes?: Record<string, unknown>;
   dimensions?: Record<string, unknown>;
-  moq?: number;
+  moq?: number | null;
   customizableProperties?: unknown;
   seo?: Record<string, unknown>;
   /** Required when updating (optimistic concurrency). */
@@ -171,7 +171,12 @@ export interface FilterDefinition {
   required: boolean;
   multiple: boolean;
   displayOrder: number;
-  validation: { min?: number; max?: number; pattern?: string; required?: boolean };
+  validation: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+    required?: boolean;
+  };
   isActive: boolean;
 }
 
@@ -249,12 +254,7 @@ export interface BulkImport {
 
 export interface CustomerRequest {
   _id: string;
-  requestType:
-    | "custom-quote"
-    | "pricing"
-    | "bulk-order"
-    | "sampling"
-    | "other";
+  requestType: "custom-quote" | "pricing" | "bulk-order" | "sampling" | "other";
   customRequestType: string | null;
   contact: { name: string; email: string; phone?: string; company?: string };
   productName: string | null;
@@ -309,3 +309,31 @@ export const REQUEST_STATUSES = [
   "won",
   "lost",
 ] as const;
+
+export interface PackagingStyle {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  imageKey: string | null;
+  imageUrl: string | null;
+  minimumOrderQuantity: number | null;
+  deliveryTime: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface HomePageContent {
+  pageMode: 'home' | 'countdown';
+  countdownTargetDate?: string;
+  eyebrow: string;
+  title: string;
+  titleAccent: string;
+  description: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
+  customersValue: string;
+  satisfactionValue: string;
+}

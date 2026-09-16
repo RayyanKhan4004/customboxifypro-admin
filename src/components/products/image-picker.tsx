@@ -1,7 +1,7 @@
 "use client";
 
 import { ImageSquare, Plus, Trash, X } from "@phosphor-icons/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Spinner } from "@/components/ui";
 import { uploadImageFile, type UploadedImage } from "@/lib/media-upload";
@@ -12,20 +12,38 @@ export function ImagePicker({
   value,
   onChange,
   existingUrls = {},
+  onUploadingChange,
 }: {
   value: ImagePickerValue[];
   onChange: (value: ImagePickerValue[]) => void;
   /** key → URL for already-persisted images (from the product detail response). */
   existingUrls?: Record<string, string>;
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const objectUrls = useRef<Record<string, string>>({});
+
+  useEffect(
+    () => () => {
+      Object.values(objectUrls.current).forEach((url) =>
+        URL.revokeObjectURL(url),
+      );
+    },
+    [],
+  );
 
   const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || busy) return;
+    if (value.length + files.length > 20) {
+      setError("A product can have at most 20 images.");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     setBusy(true);
+    onUploadingChange?.(true);
     setError(null);
     const added: ImagePickerValue[] = [];
     const urls: Record<string, string> = {};
@@ -39,28 +57,37 @@ export function ImagePicker({
           isMain: value.length + added.length === 0,
         });
       }
-      setLocalUrls((prev) => ({ ...prev, ...urls }));
-      onChange([...value, ...added]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
+      if (added.length > 0) {
+        Object.assign(objectUrls.current, urls);
+        setLocalUrls((prev) => ({ ...prev, ...urls }));
+        onChange([...value, ...added]);
+      }
       setBusy(false);
+      onUploadingChange?.(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   };
 
   const remove = (key: string) => {
-    const next = value.filter((image) => image.key !== key).map((image, index) => ({
-      ...image,
-      order: index,
-      isMain: index === 0,
-    }));
+    const next = value
+      .filter((image) => image.key !== key)
+      .map((image, index) => ({
+        ...image,
+        order: index,
+        isMain: index === 0,
+      }));
     onChange(next);
   };
 
   const makeMain = (key: string) => {
     onChange(
-      value.map((image) => ({ ...image, isMain: image.key === key })),
+      [
+        ...value.filter((image) => image.key === key),
+        ...value.filter((image) => image.key !== key),
+      ].map((image, order) => ({ ...image, order, isMain: order === 0 })),
     );
   };
 
@@ -92,6 +119,7 @@ export function ImagePicker({
                 className="rounded bg-white/20 p-1.5 hover:bg-white/40"
                 onClick={() => makeMain(image.key)}
                 title="Set as main"
+                disabled={busy}
               >
                 <ImageSquare size={14} />
               </button>
@@ -100,6 +128,7 @@ export function ImagePicker({
                 className="rounded bg-white/20 p-1.5 hover:bg-red-500/70"
                 onClick={() => remove(image.key)}
                 title="Remove"
+                disabled={busy}
               >
                 <Trash size={14} />
               </button>
@@ -109,7 +138,7 @@ export function ImagePicker({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          disabled={busy}
+          disabled={busy || value.length >= 20}
           className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
         >
           {busy ? <Spinner /> : <Plus size={18} />}
@@ -118,7 +147,8 @@ export function ImagePicker({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          disabled={busy}
           multiple
           className="hidden"
           onChange={(event) => handleFiles(event.target.files)}
