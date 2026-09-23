@@ -201,7 +201,10 @@ export default function BulkImportsPage() {
           onSubmit={handleUpload}
           className="flex flex-wrap items-end gap-4"
         >
-          <Field label="Import file">
+          <Field
+            label="Import file"
+            tooltip="Upload a CSV or Excel file using the downloaded template, or a ZIP containing the spreadsheet and referenced images. Maximum size: 20 MB."
+          >
             <input
               ref={fileRef}
               type="file"
@@ -211,7 +214,10 @@ export default function BulkImportsPage() {
               className="text-sm file:mr-3 file:rounded-md file:border file:border-border file:bg-muted file:px-3 file:py-1.5 file:text-sm file:text-foreground hover:file:bg-secondary"
             />
           </Field>
-          <Field label="Mode">
+          <Field
+            label="Mode"
+            tooltip="Draft imports every valid row. All or nothing saves products only when every row is valid."
+          >
             <Select
               value={mode}
               onChange={(v) => setMode(v as "draft" | "all-or-nothing")}
@@ -270,22 +276,27 @@ export default function BulkImportsPage() {
       </Card>
 
       <div className="mb-4 flex items-center gap-2">
-        <Select
-          value={statusFilter}
-          onChange={(v) => {
-            setStatusFilter(v);
-            setPage(1);
-          }}
-          className="w-44"
-          options={[
-            { value: "", label: "All statuses" },
-            { value: "queued", label: "Queued" },
-            { value: "processing", label: "Processing" },
-            { value: "completed", label: "Completed" },
-            { value: "failed", label: "Failed" },
-            { value: "cancelled", label: "Cancelled" },
-          ]}
-        />
+        <Field
+          label="Status"
+          tooltip="Filter the import history by its current processing status."
+        >
+          <Select
+            value={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
+            className="w-44"
+            options={[
+              { value: "", label: "All statuses" },
+              { value: "queued", label: "Queued" },
+              { value: "processing", label: "Processing" },
+              { value: "completed", label: "Completed" },
+              { value: "failed", label: "Failed" },
+              { value: "cancelled", label: "Cancelled" },
+            ]}
+          />
+        </Field>
       </div>
 
       <Table

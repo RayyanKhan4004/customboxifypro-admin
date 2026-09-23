@@ -3,7 +3,7 @@
 import { ImageSquare, Plus, Trash, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
-import { Spinner } from "@/components/ui";
+import { Field, Input, Spinner } from "@/components/ui";
 import { uploadImageFile, type UploadedImage } from "@/lib/media-upload";
 
 export type ImagePickerValue = UploadedImage;
@@ -91,6 +91,10 @@ export function ImagePicker({
     );
   };
 
+  const setAlt = (key: string, alt: string) => {
+    onChange(value.map((image) => (image.key === key ? { ...image, alt } : image)));
+  };
+
   const urlFor = (image: ImagePickerValue): string =>
     existingUrls[image.key] ?? localUrls[image.key] ?? `/${image.key}`;
 
@@ -154,6 +158,23 @@ export function ImagePicker({
           onChange={(event) => handleFiles(event.target.files)}
         />
       </div>
+      {value.length > 0 && (
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {value.map((image, index) => (
+            <Field
+              key={image.key}
+              label={`Image ${index + 1} alt text`}
+              tooltip="Describes this product image for screen readers and when the image cannot load."
+            >
+              <Input
+                value={image.alt}
+                maxLength={500}
+                onChange={(event) => setAlt(image.key, event.target.value)}
+              />
+            </Field>
+          ))}
+        </div>
+      )}
       {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
       <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
         <X size={12} />

@@ -90,12 +90,18 @@ export interface ProductPayload {
   visibility?: "public" | "internal" | "hidden";
   featured?: boolean;
   tags?: string[];
-  sku?: string;
+  sku?: string | null;
   images?: ProductImageInput[];
   attributes?: Record<string, unknown>;
-  dimensions?: Record<string, unknown>;
+  dimensions?: {
+    length?: number;
+    width?: number;
+    height?: number;
+    weight?: number;
+    unit?: "mm" | "cm" | "in";
+  };
   moq?: number | null;
-  customizableProperties?: unknown;
+  customizableProperties?: Record<string, unknown> | null;
   seo?: Record<string, unknown>;
   /** Required when updating (optimistic concurrency). */
   version?: number;
@@ -262,6 +268,7 @@ export interface CustomerRequest {
   specs: Record<string, unknown>;
   notes: string | null;
   attachments: string[];
+  attachmentUrls?: Record<string, string | null>;
   status:
     | "new"
     | "in-review"

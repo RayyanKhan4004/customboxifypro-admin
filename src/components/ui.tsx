@@ -1,6 +1,6 @@
 "use client";
 
-import { XIcon } from "@phosphor-icons/react";
+import { InfoIcon, XIcon } from "@phosphor-icons/react";
 import { clsx } from "clsx";
 import ReactSelect, { SingleValue } from "react-select";
 import React, {
@@ -222,16 +222,40 @@ export function Field({
   error,
   children,
   hint,
+  tooltip,
 }: {
   label: string;
   error?: string;
   hint?: string;
+  tooltip?: string;
   children: React.ReactNode;
 }) {
   const id = useId();
+  const tooltipId = useId();
   return (
     <div className="space-y-1">
-      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-1.5">
+        <Label className="mb-0" htmlFor={id}>{label}</Label>
+        {tooltip && (
+          <span className="group relative inline-flex">
+            <button
+              type="button"
+              aria-label={`About ${label.replace(/\s*\*$/, "")}`}
+              aria-describedby={tooltipId}
+              className="rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <InfoIcon aria-hidden size={15} />
+            </button>
+            <span
+              id={tooltipId}
+              role="tooltip"
+              className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-64 -translate-x-1/2 rounded-md border border-border bg-popover px-3 py-2 text-xs font-normal leading-5 text-popover-foreground shadow-lg group-hover:block group-focus-within:block"
+            >
+              {tooltip}
+            </span>
+          </span>
+        )}
+      </div>
       {React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id })}
       {hint && !error && (
         <p className="text-xs text-muted-foreground">{hint}</p>

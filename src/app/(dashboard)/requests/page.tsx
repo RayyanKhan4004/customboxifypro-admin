@@ -194,7 +194,7 @@ export default function RequestsPage() {
             className="w-40"
             options={[{ value: "", label: "Set status…" }, ...REQUEST_STATUSES.map((value) => ({ value, label: value }))]}
           />
-          <Button size="sm" disabled={!bulkStatus || bulkMutation.isPending} onClick={() => bulkMutation.mutate()}>
+          <Button disabled={!bulkStatus || bulkMutation.isPending} onClick={() => bulkMutation.mutate()}>
             Apply
           </Button>
         </div>
@@ -237,7 +237,7 @@ export default function RequestsPage() {
             </td>
             <td className="px-4 py-2.5 text-muted-foreground">{formatDate(request.createdAt)}</td>
             <td className="px-2 py-2.5 text-right">
-              <Button size="sm" variant="outline" onClick={() => openDetail(request._id)}>
+              <Button variant="outline" onClick={() => openDetail(request._id)}>
                 <Eye size={14} />
                 View
               </Button>
@@ -295,6 +295,32 @@ export default function RequestsPage() {
             {detail.notes && (
               <Field label="Notes">
                 <p className="text-sm whitespace-pre-wrap">{detail.notes}</p>
+              </Field>
+            )}
+
+            {detail.attachments.length > 0 && (
+              <Field label="Attachments" tooltip="Reference artwork uploaded with this customer request.">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {detail.attachments.map((key, index) => {
+                    const url = detail.attachmentUrls?.[key];
+                    return url ? (
+                      <a
+                        key={key}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="overflow-hidden rounded-md border border-border hover:border-primary"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={`Customer attachment ${index + 1}`} className="aspect-square w-full object-cover" />
+                      </a>
+                    ) : (
+                      <div key={key} className="rounded-md border border-border p-3 text-xs text-muted-foreground">
+                        Attachment {index + 1} is unavailable.
+                      </div>
+                    );
+                  })}
+                </div>
               </Field>
             )}
 

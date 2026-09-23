@@ -14,7 +14,8 @@ export function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico"
+    pathname === "/favicon.ico" ||
+    pathname === "/boxify-logo.svg"
   ) {
     return NextResponse.next();
   }
