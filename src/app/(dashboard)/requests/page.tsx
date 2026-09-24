@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DownloadSimple, Eye } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Badge,
@@ -24,7 +24,10 @@ import { formatDate } from "@/lib/format";
 import { REQUEST_STATUSES, REQUEST_TYPES } from "@/lib/types";
 import type { AdminRecord, CustomerRequest, Paged } from "@/lib/types";
 
-const STATUS_TONE: Record<string, "default" | "success" | "warning" | "danger" | "info" | "muted"> = {
+const STATUS_TONE: Record<
+  string,
+  "default" | "success" | "warning" | "danger" | "info" | "muted"
+> = {
   new: "info",
   "in-review": "warning",
   quoted: "default",
@@ -50,6 +53,16 @@ export default function RequestsPage() {
   const [note, setNote] = useState("");
   const [assignAdminId, setAssignAdminId] = useState("");
 
+  useEffect(() => {
+    const requestId = new URLSearchParams(window.location.search).get(
+      "requestId",
+    );
+    if (!requestId) return;
+    void apiGet<CustomerRequest>(`/admin/requests/${requestId}`)
+      .then(setDetail)
+      .catch(() => {});
+  }, []);
+
   const requests = useQuery({
     queryKey: ["requests", page, status, requestType, search],
     queryFn: () =>
@@ -70,7 +83,8 @@ export default function RequestsPage() {
     enabled: detail !== null,
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["requests"] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["requests"] });
 
   const statusMutation = useMutation({
     mutationFn: () => {
@@ -85,7 +99,8 @@ export default function RequestsPage() {
       show.success("Status updated.");
       setStatusNote("");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Update failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Update failed."),
   });
 
   const noteMutation = useMutation({
@@ -98,19 +113,23 @@ export default function RequestsPage() {
       show.success("Note added.");
       setNote("");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Note failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Note failed."),
   });
 
   const assignMutation = useMutation({
     mutationFn: () => {
       if (!detail) throw new Error("No request selected");
-      return apiPost(`/admin/requests/${detail._id}/assign`, { assignedTo: assignAdminId });
+      return apiPost(`/admin/requests/${detail._id}/assign`, {
+        assignedTo: assignAdminId,
+      });
     },
     onSuccess: () => {
       invalidate();
       show.success("Assigned.");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Assign failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Assign failed."),
   });
 
   const bulkMutation = useMutation({
@@ -125,7 +144,8 @@ export default function RequestsPage() {
       setBulkStatus("");
       show.success("Bulk update applied.");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Bulk update failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Bulk update failed."),
   });
 
   const items = requests.data?.data ?? [];
@@ -146,7 +166,9 @@ export default function RequestsPage() {
     setAssignAdminId(record.assignedTo ?? "");
   };
 
-  const assigneeOptions = (admins.data?.data ?? []).filter((admin) => admin.status === "active");
+  const assigneeOptions = (admins.data?.data ?? []).filter(
+    (admin) => admin.status === "active",
+  );
 
   return (
     <div>
@@ -154,7 +176,12 @@ export default function RequestsPage() {
         title="Customer requests"
         description="Quotes, pricing and bulk-order requests from the website."
         actions={
-          <Button variant="outline" onClick={() => downloadCsv("/admin/requests/export", "requests.csv")}>
+          <Button
+            variant="outline"
+            onClick={() =>
+              downloadCsv("/admin/requests/export", "requests.csv")
+            }
+          >
             <DownloadSimple size={16} />
             Export CSV
           </Button>
@@ -173,35 +200,64 @@ export default function RequestsPage() {
         />
         <Select
           value={status}
-          onChange={(v) => { setStatus(v); setPage(1); }}
+          onChange={(v) => {
+            setStatus(v);
+            setPage(1);
+          }}
           className="w-36"
-          options={[{ value: "", label: "All statuses" }, ...REQUEST_STATUSES.map((value) => ({ value, label: value }))]}
+          options={[
+            { value: "", label: "All statuses" },
+            ...REQUEST_STATUSES.map((value) => ({ value, label: value })),
+          ]}
         />
         <Select
           value={requestType}
-          onChange={(v) => { setRequestType(v); setPage(1); }}
+          onChange={(v) => {
+            setRequestType(v);
+            setPage(1);
+          }}
           className="w-40"
-          options={[{ value: "", label: "All types" }, ...REQUEST_TYPES.map((value) => ({ value, label: value }))]}
+          options={[
+            { value: "", label: "All types" },
+            ...REQUEST_TYPES.map((value) => ({ value, label: value })),
+          ]}
         />
       </Toolbar>
 
       {selected.size > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
-          <span className="text-muted-foreground">{selected.size} selected</span>
+          <span className="text-muted-foreground">
+            {selected.size} selected
+          </span>
           <Select
             value={bulkStatus}
             onChange={setBulkStatus}
             className="w-40"
-            options={[{ value: "", label: "Set status…" }, ...REQUEST_STATUSES.map((value) => ({ value, label: value }))]}
+            options={[
+              { value: "", label: "Set status…" },
+              ...REQUEST_STATUSES.map((value) => ({ value, label: value })),
+            ]}
           />
-          <Button disabled={!bulkStatus || bulkMutation.isPending} onClick={() => bulkMutation.mutate()}>
+          <Button
+            disabled={!bulkStatus || bulkMutation.isPending}
+            onClick={() => bulkMutation.mutate()}
+          >
             Apply
           </Button>
         </div>
       )}
 
       <Table
-        headers={["", "Request", "Customer", "Product", "Status", "Assigned", "Created", ""]}
+        headers={[
+          "",
+          "Request",
+          "Customer",
+          "Product",
+          "Status",
+          "Assigned",
+          "Created",
+          "",
+        ]}
         loading={requests.isLoading}
         empty="No requests found."
       >
@@ -216,26 +272,36 @@ export default function RequestsPage() {
               />
             </td>
             <td className="px-2 py-2.5">
-              <div className="text-xs text-muted-foreground">#{request._id.slice(-6)}</div>
+              <div className="text-xs text-muted-foreground">
+                #{request._id.slice(-6)}
+              </div>
               <div className="text-xs">{request.requestType}</div>
             </td>
             <td className="px-4 py-2.5">
               <div>{request.contact.name}</div>
-              <div className="text-xs text-muted-foreground">{request.contact.email}</div>
+              <div className="text-xs text-muted-foreground">
+                {request.contact.email}
+              </div>
             </td>
             <td className="px-4 py-2.5">
               {request.productName ?? "—"}
               {request.quantity != null && (
-                <div className="text-xs text-muted-foreground">Qty: {request.quantity}</div>
+                <div className="text-xs text-muted-foreground">
+                  Qty: {request.quantity}
+                </div>
               )}
             </td>
             <td className="px-4 py-2.5">
-              <Badge tone={STATUS_TONE[request.status] ?? "default"}>{request.status}</Badge>
+              <Badge tone={STATUS_TONE[request.status] ?? "default"}>
+                {request.status}
+              </Badge>
             </td>
             <td className="px-4 py-2.5 text-muted-foreground">
               {request.assignedAt ? formatDate(request.assignedAt) : "—"}
             </td>
-            <td className="px-4 py-2.5 text-muted-foreground">{formatDate(request.createdAt)}</td>
+            <td className="px-4 py-2.5 text-muted-foreground">
+              {formatDate(request.createdAt)}
+            </td>
             <td className="px-2 py-2.5 text-right">
               <Button variant="outline" onClick={() => openDetail(request._id)}>
                 <Eye size={14} />
@@ -246,7 +312,11 @@ export default function RequestsPage() {
         ))}
       </Table>
 
-      <Pagination page={page} totalPages={requests.data?.meta.totalPages ?? 1} onPage={setPage} />
+      <Pagination
+        page={page}
+        totalPages={requests.data?.meta.totalPages ?? 1}
+        onPage={setPage}
+      />
 
       <Modal
         open={detail !== null}
@@ -262,24 +332,43 @@ export default function RequestsPage() {
         {detail && (
           <div className="space-y-5">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={STATUS_TONE[detail.status] ?? "default"}>{detail.status}</Badge>
+              <Badge tone={STATUS_TONE[detail.status] ?? "default"}>
+                {detail.status}
+              </Badge>
               <Badge tone="info">{detail.requestType}</Badge>
               <span className="text-xs text-muted-foreground">
                 Submitted {formatDate(detail.createdAt)}
               </span>
             </div>
+            {detail.conversationSkipReason && (
+              <p className="text-xs text-muted-foreground">
+                WhatsApp conversation not linked: {detail.conversationSkipReason.replaceAll("_", " ")}.
+              </p>
+            )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Customer">
                 <div className="text-sm">{detail.contact.name}</div>
-                <div className="text-sm text-muted-foreground">{detail.contact.email}</div>
-                {detail.contact.phone && <div className="text-sm text-muted-foreground">{detail.contact.phone}</div>}
-                {detail.contact.company && <div className="text-sm text-muted-foreground">{detail.contact.company}</div>}
+                <div className="text-sm text-muted-foreground">
+                  {detail.contact.email}
+                </div>
+                {detail.contact.phone && (
+                  <div className="text-sm text-muted-foreground">
+                    {detail.contact.phone}
+                  </div>
+                )}
+                {detail.contact.company && (
+                  <div className="text-sm text-muted-foreground">
+                    {detail.contact.company}
+                  </div>
+                )}
               </Field>
               <Field label="Product">
                 <div className="text-sm">{detail.productName ?? "—"}</div>
                 <div className="text-sm text-muted-foreground">
-                  {detail.quantity != null ? `Quantity: ${detail.quantity}` : ""}
+                  {detail.quantity != null
+                    ? `Quantity: ${detail.quantity}`
+                    : ""}
                 </div>
               </Field>
             </div>
@@ -299,23 +388,33 @@ export default function RequestsPage() {
             )}
 
             {detail.attachments.length > 0 && (
-              <Field label="Attachments" tooltip="Reference artwork uploaded with this customer request.">
+              <Field
+                label="Attachments"
+                tooltip="Reference artwork uploaded with this customer request."
+              >
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {detail.attachments.map((key, index) => {
                     const url = detail.attachmentUrls?.[key];
                     return url ? (
                       <a
-                        key={key}
+                        key={`${key}-${index}`}
                         href={url}
                         target="_blank"
                         rel="noreferrer"
                         className="overflow-hidden rounded-md border border-border hover:border-primary"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt={`Customer attachment ${index + 1}`} className="aspect-square w-full object-cover" />
+                        <img
+                          src={url}
+                          alt={`Customer attachment ${index + 1}`}
+                          className="aspect-square w-full object-cover"
+                        />
                       </a>
                     ) : (
-                      <div key={key} className="rounded-md border border-border p-3 text-xs text-muted-foreground">
+                      <div
+                        key={`${key}-${index}`}
+                        className="rounded-md border border-border p-3 text-xs text-muted-foreground"
+                      >
                         Attachment {index + 1} is unavailable.
                       </div>
                     );
@@ -328,8 +427,16 @@ export default function RequestsPage() {
               <Field label="Change status">
                 <Select
                   value={detail.status}
-                  onChange={(v) => setDetail({ ...detail, status: v as CustomerRequest["status"] })}
-                  options={REQUEST_STATUSES.map((value) => ({ value, label: value }))}
+                  onChange={(v) =>
+                    setDetail({
+                      ...detail,
+                      status: v as CustomerRequest["status"],
+                    })
+                  }
+                  options={REQUEST_STATUSES.map((value) => ({
+                    value,
+                    label: value,
+                  }))}
                 />
                 <div className="mt-2 flex gap-2">
                   <Input
@@ -337,7 +444,10 @@ export default function RequestsPage() {
                     value={statusNote}
                     onChange={(event) => setStatusNote(event.target.value)}
                   />
-                  <Button onClick={() => statusMutation.mutate()} disabled={statusMutation.isPending}>
+                  <Button
+                    onClick={() => statusMutation.mutate()}
+                    disabled={statusMutation.isPending}
+                  >
                     {statusMutation.isPending ? <Spinner /> : null}
                     Save
                   </Button>
@@ -348,9 +458,18 @@ export default function RequestsPage() {
                   <Select
                     value={assignAdminId}
                     onChange={setAssignAdminId}
-                    options={[{ value: "", label: "Unassigned" }, ...assigneeOptions.map((admin) => ({ value: admin.id, label: admin.name }))]}
+                    options={[
+                      { value: "", label: "Unassigned" },
+                      ...assigneeOptions.map((admin) => ({
+                        value: admin.id,
+                        label: admin.name,
+                      })),
+                    ]}
                   />
-                  <Button onClick={() => assignMutation.mutate()} disabled={assignMutation.isPending || !assignAdminId}>
+                  <Button
+                    onClick={() => assignMutation.mutate()}
+                    disabled={assignMutation.isPending || !assignAdminId}
+                  >
                     {assignMutation.isPending ? <Spinner /> : null}
                     Assign
                   </Button>
@@ -366,14 +485,26 @@ export default function RequestsPage() {
                 <p className="text-sm text-muted-foreground">No notes yet.</p>
               )}
               {detail.staffNotes.map((staffNote, index) => (
-                <div key={index} className="mb-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <div className="text-xs text-muted-foreground">{formatDate(staffNote.createdAt)}</div>
+                <div
+                  key={index}
+                  className="mb-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm"
+                >
+                  <div className="text-xs text-muted-foreground">
+                    {formatDate(staffNote.createdAt)}
+                  </div>
                   {staffNote.text}
                 </div>
               ))}
               <div className="mt-3 flex gap-2">
-                <Input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Add a staff note" />
-                <Button onClick={() => noteMutation.mutate()} disabled={noteMutation.isPending || !note}>
+                <Input
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Add a staff note"
+                />
+                <Button
+                  onClick={() => noteMutation.mutate()}
+                  disabled={noteMutation.isPending || !note}
+                >
                   {noteMutation.isPending ? <Spinner /> : null}
                   Add
                 </Button>

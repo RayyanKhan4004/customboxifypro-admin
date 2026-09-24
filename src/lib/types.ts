@@ -45,7 +45,14 @@ export type Permission =
   | "admins.update"
   | "roles.manage"
   | "audit-logs.read"
-  | "settings.manage";
+  | "settings.manage"
+  | "chats.read"
+  | "chats.read_all"
+  | "chats.reply"
+  | "chats.assign"
+  | "chats.manage"
+  | "chats.notes.create"
+  | "chats.templates.send";
 
 export interface AdminUser {
   id: string;
@@ -280,6 +287,8 @@ export interface CustomerRequest {
     | "lost";
   assignedTo: string | null;
   assignedAt: string | null;
+  conversationId?: string | null;
+  conversationSkipReason?: string | null;
   consent: boolean;
   staffNotes: { text: string; adminId?: string; createdAt: string }[];
   createdAt: string;
@@ -331,7 +340,7 @@ export interface PackagingStyle {
 }
 
 export interface HomePageContent {
-  pageMode: 'home' | 'countdown';
+  pageMode: "home" | "countdown";
   countdownTargetDate?: string;
   eyebrow: string;
   title: string;

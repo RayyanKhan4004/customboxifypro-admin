@@ -6,6 +6,9 @@ import {
   FolderSimple,
   Gauge,
   ImageSquare,
+  ChatsCircle,
+  List,
+  Bell,
   Factory,
   Key,
   Package,
@@ -17,6 +20,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -29,7 +33,7 @@ import {
   ToastHost,
   useToast,
 } from "@/components/ui";
-import { apiPost } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 
 interface NavItem {
   href: string;
@@ -71,7 +75,8 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
         label: "Industries",
         icon: Factory,
         permission: "settings.manage",
-      },      {
+      },
+      {
         href: "/packaging-styles",
         label: "Packaging styles",
         icon: Package,
@@ -99,6 +104,18 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
         label: "Requests",
         icon: EnvelopeSimple,
         permission: "requests.read",
+      },
+      {
+        href: "/chats",
+        label: "Chats",
+        icon: ChatsCircle,
+        permission: "chats.read",
+      },
+      {
+        href: "/notification-deliveries",
+        label: "Deliveries",
+        icon: Bell,
+        permission: "settings.manage",
       },
       {
         href: "/audit-logs",
@@ -223,6 +240,23 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, loading, logout, can } = useAuth();
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notifications = useQuery({
+    queryKey: ["in-app-notifications", user?.id],
+    queryFn: () =>
+      apiGet<{
+        items: Array<{
+          _id: string;
+          title: string;
+          href: string;
+          readAt: string | null;
+        }>;
+        unread: number;
+      }>("/admin/notifications"),
+    enabled: Boolean(user),
+    refetchInterval: 5_000,
+  });
   const { toast, dismiss } = useToast();
 
   if (loading) {
@@ -245,7 +279,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-card">
+      {menuOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-30 bg-background/70 md:hidden"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+      <aside
+        className={`${menuOpen ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-60 shrink-0 flex-col border-r border-border bg-card md:sticky md:top-0 md:flex md:h-screen`}
+      >
         <div className="flex h-14 items-center gap-2 border-b border-border px-4">
           <img src="/boxify-logo.svg" alt="Boxify" className="h-auto w-8" />
           <span className="font-semibold">Boxify Admin</span>
@@ -269,6 +313,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       className={clsxNav(item.href, pathname)}
+                      onClick={() => setMenuOpen(false)}
                     >
                       <Icon size={18} weight="regular" />
                       {item.label}
@@ -304,7 +349,58 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
       </aside>
-      <main className="flex-1 overflow-x-hidden px-6 py-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-4 md:px-6 md:py-6">
+        <button
+          type="button"
+          className="mb-4 inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm md:hidden"
+          onClick={() => setMenuOpen(true)}
+        >
+          <List size={18} /> Menu
+        </button>
+        <div className="relative mb-3 flex justify-end">
+          <button
+            type="button"
+            aria-label={`Notifications${notifications.data?.unread ? `, ${notifications.data.unread} unread` : ""}`}
+            aria-expanded={notificationsOpen}
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            className="relative rounded-md border border-border p-2"
+          >
+            <Bell size={18} />
+            {Boolean(notifications.data?.unread) && (
+              <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">
+                {notifications.data?.unread}
+              </span>
+            )}
+          </button>
+          {notificationsOpen && (
+            <div className="absolute right-0 top-10 z-30 max-h-80 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-md border border-border bg-card p-2 shadow-lg">
+              <p className="px-2 py-1 text-sm font-semibold">Notifications</p>
+              {notifications.data?.items.length ? (
+                notifications.data.items.map((item) => (
+                  <Link
+                    key={item._id}
+                    href={item.href}
+                    onClick={() => {
+                      setNotificationsOpen(false);
+                      void apiPost(
+                        `/admin/notifications/${item._id}/read`,
+                      ).then(() => notifications.refetch());
+                    }}
+                    className={`block rounded-md px-2 py-2 text-sm hover:bg-muted ${item.readAt ? "text-muted-foreground" : "font-medium"}`}
+                  >
+                    {item.title}
+                  </Link>
+                ))
+              ) : (
+                <p className="px-2 py-3 text-sm text-muted-foreground">
+                  No notifications.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+        {children}
+      </main>
       <ChangePasswordModal
         open={passwordOpen}
         onClose={() => setPasswordOpen(false)}

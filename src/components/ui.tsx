@@ -256,7 +256,9 @@ export function Field({
           </span>
         )}
       </div>
-      {React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id })}
+      {React.isValidElement(children)
+        ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id })
+        : children}
       {hint && !error && (
         <p className="text-xs text-muted-foreground">{hint}</p>
       )}
@@ -368,9 +370,9 @@ export function Table({
       <table className="w-full min-w-[640px] text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/50 text-left">
-            {headers.map((header) => (
+            {headers.map((header, index) => (
               <th
-                key={header}
+                key={`${header}-${index}`}
                 className="px-4 py-2.5 text-xs font-medium text-muted-foreground"
               >
                 {header}

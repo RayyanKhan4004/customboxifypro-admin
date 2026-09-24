@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const backendOrigin = (process.env.BACKEND_ORIGIN ?? "http://localhost:3002").replace(/\/$/, "");
+const backendOrigin = (
+  process.env.BACKEND_ORIGIN ?? "http://localhost:3002"
+).replace(/\/$/, "");
 const REQUEST_TIMEOUT_MS = 15_000;
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 
-async function relay(request: NextRequest, context: RouteContext): Promise<NextResponse> {
+async function relay(
+  request: NextRequest,
+  context: RouteContext,
+): Promise<NextResponse> {
   const { path } = await context.params;
   const headers = new Headers(request.headers);
   headers.delete("host");
@@ -14,7 +19,10 @@ async function relay(request: NextRequest, context: RouteContext): Promise<NextR
   headers.delete("accept-encoding");
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    path.at(-1) === "attachment" ? 30_000 : REQUEST_TIMEOUT_MS,
+  );
   let response: Response;
 
   try {
@@ -23,7 +31,9 @@ async function relay(request: NextRequest, context: RouteContext): Promise<NextR
       {
         method: request.method,
         headers,
-        body: ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer(),
+        body: ["GET", "HEAD"].includes(request.method)
+          ? undefined
+          : await request.arrayBuffer(),
         redirect: "manual",
         signal: controller.signal,
       },
@@ -78,7 +88,9 @@ async function relay(request: NextRequest, context: RouteContext): Promise<NextR
     status: response.status,
     headers: responseHeaders,
   });
-  const isHttpLocalhost = request.nextUrl.hostname === "localhost" && request.nextUrl.protocol === "http:";
+  const isHttpLocalhost =
+    request.nextUrl.hostname === "localhost" &&
+    request.nextUrl.protocol === "http:";
 
   for (const cookie of response.headers.getSetCookie()) {
     relayed.headers.append(
