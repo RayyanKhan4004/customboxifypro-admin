@@ -1,15 +1,9 @@
 "use client";
 
-import { InfoIcon, XIcon } from "@phosphor-icons/react";
+import { InfoIcon, SpinnerIcon, XIcon } from "@phosphor-icons/react";
 import { clsx } from "clsx";
 import ReactSelect, { SingleValue } from "react-select";
-import React, {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "outline";
 
@@ -18,8 +12,10 @@ const buttonVariants: Record<ButtonVariant, string> = {
     "bg-primary text-primary-foreground hover:brightness-110 disabled:opacity-50",
   secondary:
     "bg-secondary text-secondary-foreground hover:bg-muted disabled:opacity-50",
-  ghost: "text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50",
-  danger: "bg-destructive text-white hover:brightness-110 disabled:opacity-50",
+  ghost:
+    "text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50",
+  danger:
+    "bg-destructive text-destructive-foreground hover:brightness-110 disabled:opacity-50",
   outline:
     "border border-border bg-transparent hover:bg-muted disabled:opacity-50",
 };
@@ -36,8 +32,8 @@ export function Button({
   return (
     <button
       className={clsx(
-        "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed",
-        size === "sm" ? "h-8 px-3 text-xs" : "h-9 px-4 text-sm",
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed",
+        size === "sm" ? "h-9 px-3 text-xs" : "h-10 px-4 text-sm",
         buttonVariants[variant],
         className,
       )}
@@ -55,7 +51,7 @@ export function IconButton({
     <button
       title={title}
       className={clsx(
-        "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40",
+        "inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40",
         className,
       )}
       {...props}
@@ -64,7 +60,7 @@ export function IconButton({
 }
 
 const inputClasses =
-  "h-15 w-full rounded-xl border border-transparent bg-foreground/10 px-5 text-sm text-foreground placeholder:text-white/50 outline-none transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-50";
+  "h-11 w-full rounded-xl border border-input bg-muted/70 px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:bg-card disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Input({
   className,
@@ -80,7 +76,7 @@ export function Textarea({
   return (
     <textarea
       className={clsx(
-        "min-h-30 w-full resize-none rounded-xl border border-transparent bg-foreground/10 px-5 py-5 text-sm text-foreground placeholder:text-white/50 outline-none transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-50",
+        "min-h-30 w-full resize-none rounded-xl border border-input bg-muted/70 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:bg-card disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -129,16 +125,18 @@ export function Select({
       }}
       isSearchable={false}
       menuPlacement="auto"
-      menuPortalTarget={typeof document === "undefined" ? undefined : document.body}
+      menuPortalTarget={
+        typeof document === "undefined" ? undefined : document.body
+      }
       styles={{
         control: (base, state) => ({
           ...base,
-          minHeight: "3.75rem",
-          height: "3.75rem",
+          minHeight: "2.75rem",
+          height: "2.75rem",
           borderRadius: "0.75rem",
           borderColor: state.isFocused ? "var(--primary)" : "transparent",
           boxShadow: "none",
-          backgroundColor: "color-mix(in srgb, var(--foreground) 10%, transparent)",
+          backgroundColor: "var(--muted)",
           cursor: "pointer",
           fontSize: 14,
           transition: "border-color 150ms ease",
@@ -209,7 +207,10 @@ export function Label({
 }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={clsx("mb-1 block text-xs font-medium text-muted-foreground", className)}
+      className={clsx(
+        "mb-1 block text-xs font-medium text-muted-foreground",
+        className,
+      )}
       {...props}
     >
       {children}
@@ -235,17 +236,21 @@ export function Field({
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5">
-        <Label className="mb-0" htmlFor={id}>{label}</Label>
+        <Label className="mb-0" htmlFor={id}>
+          {label}
+        </Label>
         {tooltip && (
           <span className="group relative inline-flex">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               aria-label={`About ${label.replace(/\s*\*$/, "")}`}
               aria-describedby={tooltipId}
-              className="rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-6 w-6 rounded-full p-0 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
               <InfoIcon aria-hidden size={15} />
-            </button>
+            </Button>
             <span
               id={tooltipId}
               role="tooltip"
@@ -257,7 +262,10 @@ export function Field({
         )}
       </div>
       {React.isValidElement(children)
-        ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id })
+        ? React.cloneElement(
+            children as React.ReactElement<Record<string, unknown>>,
+            { id },
+          )
         : children}
       {hint && !error && (
         <p className="text-xs text-muted-foreground">{hint}</p>
@@ -267,7 +275,8 @@ export function Field({
   );
 }
 
-type BadgeTone = "default" | "success" | "warning" | "danger" | "info" | "muted";
+type BadgeTone =
+  "default" | "success" | "warning" | "danger" | "info" | "muted";
 
 const badgeTones: Record<BadgeTone, string> = {
   default: "bg-secondary text-foreground border-border",
@@ -297,26 +306,12 @@ export function Badge({
 
 export function Spinner({ className }: { className?: string }) {
   return (
-    <svg
-      className={clsx("h-4 w-4 animate-spin text-current", className)}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-label="loading"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      />
-    </svg>
+    <SpinnerIcon
+      size={32}
+      className={clsx("animate-spin text-current", className)}
+      aria-label="Loading"
+      role="status"
+    />
   );
 }
 
@@ -326,7 +321,10 @@ export function Card({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={clsx("rounded-lg border border-border bg-card", className)}
+      className={clsx(
+        "rounded-2xl border border-border bg-card shadow-sm shadow-black/10",
+        className,
+      )}
       {...props}
     />
   );
@@ -342,9 +340,9 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         )}
@@ -366,14 +364,14 @@ export function Table({
   loading?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
       <table className="w-full min-w-[640px] text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/50 text-left">
             {headers.map((header, index) => (
               <th
                 key={`${header}-${index}`}
-                className="px-4 py-2.5 text-xs font-medium text-muted-foreground"
+                className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
               >
                 {header}
               </th>
@@ -467,24 +465,35 @@ export function Modal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 sm:p-8"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/65 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-modal-title"
         className={clsx(
-          "my-auto w-full rounded-lg border border-border bg-card shadow-xl",
-          wide ? "max-w-3xl" : "max-w-lg",
+          "my-auto w-full overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/40",
+          wide ? "max-w-4xl" : "max-w-lg",
         )}
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-          <h2 className="text-sm font-semibold">{title}</h2>
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+          <h2
+            id="admin-modal-title"
+            className="text-base font-semibold tracking-tight"
+          >
+            {title}
+          </h2>
           <IconButton onClick={onClose} aria-label="Close">
             <XIcon className="h-4 w-4" />
           </IconButton>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
+        <div className="max-h-[min(76vh,52rem)] overflow-y-auto px-5 py-5 sm:px-6">
+          {children}
+        </div>
         {footer && (
           <div className="flex justify-end gap-2 border-t border-border px-5 py-3.5">
             {footer}
@@ -566,14 +575,16 @@ export function Toggle({
   label?: string;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="sm"
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={clsx(
-        "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+        "relative h-5 w-9 shrink-0 rounded-full p-0 transition-colors hover:bg-transparent",
         checked ? "bg-primary" : "bg-input",
       )}
     >
@@ -583,15 +594,11 @@ export function Toggle({
           checked ? "translate-x-4.5 translate-x-[18px]" : "translate-x-1",
         )}
       />
-    </button>
+    </Button>
   );
 }
 
-export function Toolbar({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function Toolbar({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">{children}</div>
   );
@@ -656,13 +663,15 @@ export function Toast({
       role="alert"
     >
       <span className="flex-1">{message}</span>
-      <button
+      <IconButton
         onClick={onClose}
         className="text-current/70 hover:text-current"
         aria-label="Dismiss"
       >
-        <span aria-hidden="true" className="text-base leading-none">Ã—</span>
-      </button>
+        <span aria-hidden="true" className="text-base leading-none">
+          Ã—
+        </span>
+      </IconButton>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { ImageSquare, Plus, Trash, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
-import { Field, Input, Spinner } from "@/components/ui";
+import { Button, Field, IconButton, Input, Spinner } from "@/components/ui";
 import { uploadImageFile, type UploadedImage } from "@/lib/media-upload";
 
 export type ImagePickerValue = UploadedImage;
@@ -118,36 +118,37 @@ export function ImagePicker({
               </span>
             )}
             <div className="absolute inset-0 hidden items-center justify-center gap-1 bg-black/50 group-hover:flex">
-              <button
+              <IconButton
                 type="button"
-                className="rounded bg-white/20 p-1.5 hover:bg-white/40"
+                className="h-8 w-8 rounded-lg bg-white/20 text-white hover:bg-white/40 hover:text-white"
                 onClick={() => makeMain(image.key)}
                 title="Set as main"
                 disabled={busy}
               >
                 <ImageSquare size={14} />
-              </button>
-              <button
+              </IconButton>
+              <IconButton
                 type="button"
-                className="rounded bg-white/20 p-1.5 hover:bg-red-500/70"
+                className="h-8 w-8 rounded-lg bg-white/20 text-white hover:bg-red-500/70 hover:text-white"
                 onClick={() => remove(image.key)}
                 title="Remove"
                 disabled={busy}
               >
                 <Trash size={14} />
-              </button>
+              </IconButton>
             </div>
           </div>
         ))}
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => inputRef.current?.click()}
           disabled={busy || value.length >= 20}
-          className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+          className="h-24 w-24 flex-col gap-1 rounded-md border border-dashed border-border px-0 text-muted-foreground transition-colors hover:border-primary hover:bg-transparent hover:text-primary disabled:opacity-50"
         >
           {busy ? <Spinner /> : <Plus size={18} />}
           <span className="text-xs">Upload</span>
-        </button>
+        </Button>
         <input
           ref={inputRef}
           type="file"

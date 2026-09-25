@@ -86,7 +86,7 @@ export default function NotificationDeliveriesPage() {
                   </p>
                 )}
               </div>
-              {item.status !== "blocked" && <Button
+              {(item.status !== "blocked" || item.channel === "whatsapp") && <Button
                 type="button"
                 variant="outline"
                 disabled={retry.isPending}
@@ -113,7 +113,7 @@ export default function NotificationDeliveriesPage() {
       </div>
       {retry.isError && (
         <p role="alert" className="mt-3 text-sm text-destructive">
-          Retry failed.
+          {retry.error instanceof Error ? retry.error.message : "Retry failed."}
         </p>
       )}
     </div>

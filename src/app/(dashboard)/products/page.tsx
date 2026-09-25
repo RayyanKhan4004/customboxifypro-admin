@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckSquare, DotsThree, Plus, Square } from "@phosphor-icons/react";
+import { CheckSquareIcon, DotsThreeIcon, PlusIcon, SquareIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -53,7 +53,9 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState("updatedAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selected, setSelected] = useState<string[]>([]);
-  const [deleteTarget, setDeleteTarget] = useState<ProductListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProductListItem | null>(
+    null,
+  );
 
   const debouncedSearch = useDebouncedValue(filters.search, 350);
 
@@ -64,7 +66,10 @@ export default function ProductsPage() {
   });
 
   const products = useQuery({
-    queryKey: ["products", { page, ...filters, search: debouncedSearch, sortBy, sortDir }],
+    queryKey: [
+      "products",
+      { page, ...filters, search: debouncedSearch, sortBy, sortDir },
+    ],
     queryFn: () =>
       apiGet<Paged<ProductListItem>>(
         `/admin/products${qs({
@@ -81,7 +86,8 @@ export default function ProductsPage() {
       ),
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["products"] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["products"] });
 
   const publishMutation = useMutation({
     mutationFn: ({ id, publish }: { id: string; publish: boolean }) =>
@@ -96,7 +102,8 @@ export default function ProductsPage() {
       show.success("Product deleted.");
       setDeleteTarget(null);
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Delete failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Delete failed."),
   });
 
   const restoreMutation = useMutation({
@@ -105,17 +112,20 @@ export default function ProductsPage() {
       invalidate();
       show.success("Product restored.");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Restore failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Restore failed."),
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => apiPost("/admin/products/bulk/delete", { ids }),
+    mutationFn: (ids: string[]) =>
+      apiPost("/admin/products/bulk/delete", { ids }),
     onSuccess: () => {
       invalidate();
       setSelected([]);
       show.success("Products deleted.");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Bulk delete failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Bulk delete failed."),
   });
 
   const bulkStatusMutation = useMutation({
@@ -126,7 +136,8 @@ export default function ProductsPage() {
       setSelected([]);
       show.success("Products updated.");
     },
-    onError: (err) => show.error(err instanceof Error ? err.message : "Bulk update failed."),
+    onError: (err) =>
+      show.error(err instanceof Error ? err.message : "Bulk update failed."),
   });
 
   const toggleRow = (id: string) =>
@@ -144,7 +155,7 @@ export default function ProductsPage() {
         actions={
           can("products.create") ? (
             <Button onClick={() => router.push("/products/new")}>
-              <Plus size={16} />
+              <PlusIcon size={16} />
               New product
             </Button>
           ) : undefined
@@ -198,7 +209,10 @@ export default function ProductsPage() {
           className="w-44"
           options={[
             { value: "", label: "All categories" },
-            ...(categories.data?.map((category) => ({ value: category.id, label: category.name })) ?? []),
+            ...(categories.data?.map((category) => ({
+              value: category.id,
+              label: category.name,
+            })) ?? []),
           ]}
         />
         <Select
@@ -226,7 +240,10 @@ export default function ProductsPage() {
           <Checkbox
             checked={filters.includeDeleted}
             onChange={(event) => {
-              setFilters((prev) => ({ ...prev, includeDeleted: event.target.checked }));
+              setFilters((prev) => ({
+                ...prev,
+                includeDeleted: event.target.checked,
+              }));
               setPage(1);
             }}
           />
@@ -239,10 +256,25 @@ export default function ProductsPage() {
           <span>{selected.length} selected</span>
           {can("products.publish") && (
             <>
-              <Button size="sm" variant="outline" onClick={() => bulkStatusMutation.mutate({ ids: selected, status: "published" })}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  bulkStatusMutation.mutate({
+                    ids: selected,
+                    status: "published",
+                  })
+                }
+              >
                 Publish
               </Button>
-              <Button size="sm" variant="outline" onClick={() => bulkStatusMutation.mutate({ ids: selected, status: "draft" })}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  bulkStatusMutation.mutate({ ids: selected, status: "draft" })
+                }
+              >
                 Unpublish
               </Button>
             </>
@@ -276,18 +308,20 @@ export default function ProductsPage() {
         {items.map((product) => (
           <tr key={product.id} className="hover:bg-muted/30">
             <td className="w-8 px-2 py-2.5">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => toggleRow(product.id)}
-                className="text-muted-foreground hover:text-foreground"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 aria-label="Select row"
               >
                 {selected.includes(product.id) ? (
-                  <CheckSquare size={16} />
+                  <CheckSquareIcon size={16} />
                 ) : (
-                  <Square size={16} />
+                  <SquareIcon size={16} />
                 )}
-              </button>
+              </Button>
             </td>
             <td className="px-4 py-2.5">
               <div className="flex items-center gap-3">
@@ -317,8 +351,9 @@ export default function ProductsPage() {
               </div>
             </td>
             <td className="px-4 py-2.5 text-muted-foreground">
-              {categories.data?.find((category) => category.id === product.categoryId)
-                ?.name ?? "—"}
+              {categories.data?.find(
+                (category) => category.id === product.categoryId,
+              )?.name ?? "—"}
             </td>
             <td className="px-4 py-2.5">
               <Badge
@@ -333,7 +368,9 @@ export default function ProductsPage() {
                 {product.status}
               </Badge>
             </td>
-            <td className="px-4 py-2.5 text-muted-foreground">{product.visibility}</td>
+            <td className="px-4 py-2.5 text-muted-foreground">
+              {product.visibility}
+            </td>
             <td className="px-4 py-2.5">
               {product.featured ? (
                 <Badge tone="info">Featured</Badge>
@@ -350,7 +387,9 @@ export default function ProductsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => publishMutation.mutate({ id: product.id, publish: true })}
+                    onClick={() =>
+                      publishMutation.mutate({ id: product.id, publish: true })
+                    }
                   >
                     Publish
                   </Button>
@@ -359,7 +398,9 @@ export default function ProductsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => publishMutation.mutate({ id: product.id, publish: false })}
+                    onClick={() =>
+                      publishMutation.mutate({ id: product.id, publish: false })
+                    }
                   >
                     Unpublish
                   </Button>
@@ -369,7 +410,7 @@ export default function ProductsPage() {
                     title="Restore"
                     onClick={() => restoreMutation.mutate(product.id)}
                   >
-                    <DotsThree size={16} />
+                    <DotsThreeIcon size={16} />
                   </IconButton>
                 )}
                 {can("products.delete") && (
@@ -408,7 +449,13 @@ export default function ProductsPage() {
 
 function PackageIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="h-4 w-4"
+    >
       <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
       <path d="m3.3 7 8.7 5 8.7-5M12 22V12" />
     </svg>
@@ -417,7 +464,13 @@ function PackageIcon() {
 
 function DeleteIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="h-4 w-4"
+    >
       <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14" />
     </svg>
   );

@@ -1,23 +1,24 @@
 "use client";
 
 import {
-  ClockCounterClockwise,
-  EnvelopeSimple,
-  FolderSimple,
-  Gauge,
-  ImageSquare,
-  ChatsCircle,
-  List,
-  Bell,
-  Factory,
-  Key,
-  Package,
-  ShieldCheck,
-  SignOut,
-  UploadSimple,
-  UsersThree,
+  KeyIcon,
+  ShieldCheckIcon,
+  SignOutIcon,
+  UsersThreeIcon,
+  BellIcon,
+  ClockCounterClockwiseIcon,
+  ChatsCircleIcon,
+  EnvelopeSimpleIcon,
+  UploadSimpleIcon,
+  PackageIcon,
+  FactoryIcon,
+  ImageSquareIcon,
+  FolderSimpleDashedIcon,
+  GaugeIcon,
+  ListBulletsIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -49,43 +50,43 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
       {
         href: "/home-page",
         label: "Home page",
-        icon: Gauge,
+        icon: GaugeIcon,
         permission: "settings.manage",
       },
       {
         href: "/products",
         label: "Products",
-        icon: Package,
+        icon: PackageIcon,
         permission: "products.read",
       },
       {
         href: "/categories",
         label: "Categories",
-        icon: FolderSimple,
+        icon: FolderSimpleDashedIcon,
         permission: "categories.manage",
       },
       {
         href: "/media",
         label: "Media",
-        icon: ImageSquare,
+        icon: ImageSquareIcon,
         permission: "media.manage",
       },
       {
         href: "/industries",
         label: "Industries",
-        icon: Factory,
+        icon: FactoryIcon,
         permission: "settings.manage",
       },
       {
         href: "/packaging-styles",
         label: "Packaging styles",
-        icon: Package,
+        icon: PackageIcon,
         permission: "settings.manage",
       },
       {
         href: "/bulk-imports",
         label: "Bulk imports",
-        icon: UploadSimple,
+        icon: UploadSimpleIcon,
         permission: "products.bulk-import",
       },
     ],
@@ -94,33 +95,27 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
     title: "Operations",
     items: [
       {
-        href: "/home-page",
-        label: "Home page",
-        icon: Gauge,
-        permission: "settings.manage",
-      },
-      {
         href: "/requests",
         label: "Requests",
-        icon: EnvelopeSimple,
+        icon: EnvelopeSimpleIcon,
         permission: "requests.read",
       },
       {
         href: "/chats",
         label: "Chats",
-        icon: ChatsCircle,
+        icon: ChatsCircleIcon,
         permission: "chats.read",
       },
       {
         href: "/notification-deliveries",
         label: "Deliveries",
-        icon: Bell,
+        icon: BellIcon,
         permission: "settings.manage",
       },
       {
         href: "/audit-logs",
         label: "Audit logs",
-        icon: ClockCounterClockwise,
+        icon: ClockCounterClockwiseIcon,
         permission: "audit-logs.read",
       },
     ],
@@ -129,21 +124,15 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
     title: "Access",
     items: [
       {
-        href: "/home-page",
-        label: "Home page",
-        icon: Gauge,
-        permission: "settings.manage",
-      },
-      {
         href: "/roles",
         label: "Roles",
-        icon: ShieldCheck,
+        icon: ShieldCheckIcon,
         permission: "roles.manage",
       },
       {
         href: "/admins",
         label: "Admins",
-        icon: UsersThree,
+        icon: UsersThreeIcon,
         permission: "admins.read",
       },
     ],
@@ -227,7 +216,10 @@ function ChangePasswordModal({
           />
         </Field>
         {error && (
-          <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <p
+            role="alert"
+            className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+          >
             {error}
           </p>
         )}
@@ -258,6 +250,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
     refetchInterval: 5_000,
   });
   const { toast, dismiss } = useToast();
+  const pageLabel =
+    pathname === "/dashboard"
+      ? "Workspace overview"
+      : (NAV_SECTIONS.flatMap((section) => section.items).find(
+          (item) =>
+            pathname === item.href || pathname.startsWith(`${item.href}/`),
+        )?.label ?? "Admin workspace");
 
   if (loading) {
     return (
@@ -280,28 +279,46 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {menuOpen && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
           aria-label="Close navigation"
-          className="fixed inset-0 z-30 bg-background/70 md:hidden"
+          className="fixed inset-0 z-30 h-full w-full rounded-none bg-background/70 p-0 md:hidden"
           onClick={() => setMenuOpen(false)}
         />
       )}
       <aside
-        className={`${menuOpen ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-60 shrink-0 flex-col border-r border-border bg-card md:sticky md:top-0 md:flex md:h-screen`}
+        className={`${menuOpen ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-64 shrink-0 flex-col border-r border-border bg-card shadow-2xl shadow-black/20 md:sticky md:top-0 md:flex md:h-screen md:shadow-none`}
       >
-        <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-          <img src="/boxify-logo.svg" alt="Boxify" className="h-auto w-8" />
-          <span className="font-semibold">Boxify Admin</span>
+        <div className="flex h-16 items-center gap-3 border-b border-border px-5">
+          <Image
+            src="/boxify-logo.svg"
+            alt="Boxify"
+            width={32}
+            height={32}
+            priority
+          />
+          <div>
+            <p className="text-sm font-semibold tracking-tight">Boxify</p>
+            <p className="text-[11px] text-muted-foreground">Admin workspace</p>
+          </div>
         </div>
-        <nav className="flex-1 overflow-y-auto px-2 py-4">
-          <Link href="/dashboard" className={clsxNav("/dashboard", pathname)}>
-            <Gauge size={18} weight="regular" />
+        <nav
+          aria-label="Main navigation"
+          className="flex-1 overflow-y-auto px-3 py-4"
+        >
+          <Link
+            href="/dashboard"
+            className={clsxNav("/dashboard", pathname)}
+            aria-current={pathname === "/dashboard" ? "page" : undefined}
+            onClick={() => setMenuOpen(false)}
+          >
+            <GaugeIcon size={18} weight="regular" />
             Dashboard
           </Link>
           {NAV_SECTIONS.map((section) => (
-            <div key={section.title} className="mt-4">
-              <p className="mb-1 px-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <div key={section.title} className="mt-6 first:mt-2">
+              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {section.title}
               </p>
               {section.items
@@ -313,6 +330,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href}
                       className={clsxNav(item.href, pathname)}
+                      aria-current={
+                        pathname.startsWith(item.href) ? "page" : undefined
+                      }
                       onClick={() => setMenuOpen(false)}
                     >
                       <Icon size={18} weight="regular" />
@@ -335,7 +355,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               title="Change password"
               onClick={() => setPasswordOpen(true)}
             >
-              <Key size={16} />
+              <KeyIcon size={16} />
             </IconButton>
           </div>
           <Button
@@ -344,62 +364,75 @@ export function Shell({ children }: { children: React.ReactNode }) {
             className="w-full"
             onClick={() => logout()}
           >
-            <SignOut size={14} />
+            <SignOutIcon size={14} />
             Sign out
           </Button>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-4 md:px-6 md:py-6">
-        <button
-          type="button"
-          className="mb-4 inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm md:hidden"
-          onClick={() => setMenuOpen(true)}
-        >
-          <List size={18} /> Menu
-        </button>
-        <div className="relative mb-3 flex justify-end">
-          <button
-            type="button"
-            aria-label={`Notifications${notifications.data?.unread ? `, ${notifications.data.unread} unread` : ""}`}
-            aria-expanded={notificationsOpen}
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative rounded-md border border-border p-2"
-          >
-            <Bell size={18} />
-            {Boolean(notifications.data?.unread) && (
-              <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">
-                {notifications.data?.unread}
-              </span>
-            )}
-          </button>
-          {notificationsOpen && (
-            <div className="absolute right-0 top-10 z-30 max-h-80 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-md border border-border bg-card p-2 shadow-lg">
-              <p className="px-2 py-1 text-sm font-semibold">Notifications</p>
-              {notifications.data?.items.length ? (
-                notifications.data.items.map((item) => (
-                  <Link
-                    key={item._id}
-                    href={item.href}
-                    onClick={() => {
-                      setNotificationsOpen(false);
-                      void apiPost(
-                        `/admin/notifications/${item._id}/read`,
-                      ).then(() => notifications.refetch());
-                    }}
-                    className={`block rounded-md px-2 py-2 text-sm hover:bg-muted ${item.readAt ? "text-muted-foreground" : "font-medium"}`}
-                  >
-                    {item.title}
-                  </Link>
-                ))
-              ) : (
-                <p className="px-2 py-3 text-sm text-muted-foreground">
-                  No notifications.
-                </p>
-              )}
+      <main className="min-w-0 flex-1 overflow-x-hidden">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur-xl md:px-8">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              aria-label="Open navigation"
+              aria-expanded={menuOpen}
+              className="md:hidden"
+              onClick={() => setMenuOpen(true)}
+            >
+              <ListBulletsIcon size={18} /> Menu
+            </Button>
+            <div className="hidden text-sm font-medium text-muted-foreground sm:block">
+              {pageLabel}
             </div>
-          )}
+          </div>
+          <div className="relative flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              aria-label={`Notifications${notifications.data?.unread ? `, ${notifications.data.unread} unread` : ""}`}
+              aria-expanded={notificationsOpen}
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="relative h-10 w-10 border border-border bg-card p-0! text-muted-foreground hover:text-foreground"
+            >
+              <BellIcon size={18} />
+              {Boolean(notifications.data?.unread) && (
+                <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-5 text-primary-foreground">
+                  {notifications.data?.unread}
+                </span>
+              )}
+            </Button>
+            {notificationsOpen && (
+              <div className="absolute right-0 top-full z-30 mt-2 max-h-[min(28rem,calc(100dvh-6rem))] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-2xl shadow-black/30">
+                <p className="px-3 py-2 text-sm font-semibold">Notifications</p>
+                {notifications.data?.items.length ? (
+                  notifications.data.items.map((item) => (
+                    <Link
+                      key={item._id}
+                      href={item.href}
+                      onClick={() => {
+                        setNotificationsOpen(false);
+                        void apiPost(
+                          `/admin/notifications/${item._id}/read`,
+                        ).then(() => notifications.refetch());
+                      }}
+                      className={`block rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-muted ${item.readAt ? "text-muted-foreground" : "font-medium text-foreground"}`}
+                    >
+                      {item.title}
+                    </Link>
+                  ))
+                ) : (
+                  <p className="px-3 py-4 text-sm text-muted-foreground">
+                    No notifications.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </header>
+        <div className="mx-auto w-full max-w-[1600px] px-4 py-6 md:px-8 md:py-8">
+          {children}
         </div>
-        {children}
       </main>
       <ChangePasswordModal
         open={passwordOpen}
@@ -414,6 +447,6 @@ function clsxNav(href: string, pathname: string): string {
   const active =
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
   return active
-    ? "flex items-center gap-2.5 rounded-md bg-primary/15 px-3 py-2 text-sm font-medium text-primary"
-    : "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
+    ? "flex min-h-10 items-center gap-3 rounded-xl bg-primary/12 px-3 text-sm font-semibold text-primary"
+    : "flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
 }

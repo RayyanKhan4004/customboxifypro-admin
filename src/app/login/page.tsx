@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
-import { Button, Input, Label, Spinner } from "@/components/ui";
+import { Button, Card, Input, Label, Spinner } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,58 +36,65 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <img
+          <Image
             src="/boxify-logo.svg"
             alt="Boxify"
-            className="mx-auto mb-3 h-auto w-12"
+            width={48}
+            height={48}
+            className="mx-auto mb-4"
+            priority
           />
-          <h1 className="text-xl font-semibold">Boxify Admin</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Boxify Admin
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sign in to manage your catalog
+            Sign in to manage your workspace
           </p>
         </div>
-        <form
-          onSubmit={submit}
-          className="space-y-4 rounded-lg border border-border bg-card p-6"
-        >
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@company.com"
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          {error && (
-            <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              {error}
-            </p>
-          )}
-          <Button type="submit" className="w-full" disabled={busy}>
-            {busy ? <Spinner /> : null}
-            Sign in
-          </Button>
+        <form onSubmit={submit} className="space-y-5">
+          <Card className="space-y-5 p-6 sm:p-8">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@company.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            {error && (
+              <p
+                role="alert"
+                className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+              >
+                {error}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? <Spinner /> : null}
+              Sign in
+            </Button>
+          </Card>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

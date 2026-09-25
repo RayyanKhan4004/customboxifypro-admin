@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DownloadSimple, Eye } from "@phosphor-icons/react";
+import { CopySimple, DownloadSimple, Eye } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 
 import {
@@ -37,6 +37,47 @@ const STATUS_TONE: Record<
   won: "success",
   lost: "muted",
 };
+
+function readableLabel(value: string) {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replaceAll(/[-_]+/g, " ")
+    .replace(/^\w/, (letter) => letter.toUpperCase());
+}
+
+function renderSpecValue(value: unknown): React.ReactNode {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-muted-foreground">Not provided</span>;
+  }
+  if (Array.isArray(value)) {
+    return value.length ? (
+      <ul className="list-inside list-disc space-y-1">
+        {value.map((item, index) => (
+          <li key={index}>{renderSpecValue(item)}</li>
+        ))}
+      </ul>
+    ) : (
+      <span className="text-muted-foreground">None</span>
+    );
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value);
+    return entries.length ? (
+      <dl className="grid gap-2 sm:grid-cols-2">
+        {entries.map(([key, nestedValue]) => (
+          <div key={key} className="rounded-lg bg-muted/50 px-3 py-2">
+            <dt className="text-xs text-muted-foreground">{readableLabel(key)}</dt>
+            <dd className="mt-0.5 break-words text-sm">{renderSpecValue(nestedValue)}</dd>
+          </div>
+        ))}
+      </dl>
+    ) : (
+      <span className="text-muted-foreground">None</span>
+    );
+  }
+  if (typeof value === "boolean") return <>{value ? "Yes" : "No"}</>;
+  return <>{String(value)}</>;
+}
 
 export default function RequestsPage() {
   const queryClient = useQueryClient();
@@ -375,9 +416,48 @@ export default function RequestsPage() {
 
             {Object.keys(detail.specs ?? {}).length > 0 && (
               <Field label="Specifications">
-                <pre className="overflow-x-auto rounded-md border border-border bg-muted p-3 text-xs">
-                  {JSON.stringify(detail.specs, null, 2)}
-                </pre>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard
+                          .writeText(JSON.stringify(detail.specs))
+                          .then(() => show.success("Raw specifications copied."))
+                          .catch(() => show.error("Could not copy specifications."));
+                      }}
+                    >
+                      <CopySimple size={15} /> Copy raw
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard
+                          .writeText(JSON.stringify(detail.specs, null, 2))
+                          .then(() => show.success("Formatted specifications copied."))
+                          .catch(() => show.error("Could not copy specifications."));
+                      }}
+                    >
+                      <CopySimple size={15} /> Copy formatted
+                    </Button>
+                  </div>
+                  <dl className="grid gap-3 rounded-xl border border-border bg-muted/30 p-3 sm:grid-cols-2">
+                    {Object.entries(detail.specs).map(([key, value]) => (
+                      <div key={key} className="min-w-0 space-y-1">
+                        <dt className="text-xs font-medium text-muted-foreground">
+                          {readableLabel(key)}
+                        </dt>
+                        <dd className="break-words text-sm">
+                          {renderSpecValue(value)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
               </Field>
             )}
 

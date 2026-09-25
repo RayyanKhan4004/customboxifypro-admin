@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { apiPost } from "@/lib/api";
-import { Button, Input, Label, Spinner } from "@/components/ui";
+import { Button, Card, Input, Label, Spinner } from "@/components/ui";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -29,7 +29,10 @@ function ResetPasswordForm() {
     }
     setBusy(true);
     try {
-      await apiPost("/admin/auth/reset-password", { token, newPassword: password });
+      await apiPost("/admin/auth/reset-password", {
+        token,
+        newPassword: password,
+      });
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reset failed.");
@@ -40,7 +43,7 @@ function ResetPasswordForm() {
 
   if (done) {
     return (
-      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+      <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground">
         Your password has been reset. You can now sign in.
       </div>
     );
@@ -92,15 +95,20 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-xl font-semibold">Reset your password</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Reset your password
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose a new password for your admin account.
+          </p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-6">
+        <Card className="p-6 sm:p-8">
           <Suspense fallback={null}>
             <ResetPasswordForm />
           </Suspense>
-        </div>
+        </Card>
       </div>
     </div>
   );

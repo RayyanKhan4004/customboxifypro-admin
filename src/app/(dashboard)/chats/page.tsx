@@ -333,11 +333,12 @@ function ChatsPageContent() {
             {list.data?.data.map((conversation) => {
               const itemCustomer = customerOf(conversation);
               return (
-                <button
+                <Button
                   key={conversation._id}
                   type="button"
+                  variant="ghost"
                   onClick={() => selectChat(conversation._id)}
-                  className={`w-full border-b border-border p-4 text-left hover:bg-muted ${selectedId === conversation._id ? "bg-muted" : ""}`}
+                  className={`h-auto w-full justify-start rounded-none border-b border-border p-4 text-left font-normal hover:bg-muted ${selectedId === conversation._id ? "bg-muted" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate font-medium">
@@ -355,7 +356,7 @@ function ChatsPageContent() {
                   <p className="mt-1 truncate text-sm text-muted-foreground">
                     {conversation.lastMessagePreview || "No messages yet"}
                   </p>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -395,14 +396,16 @@ function ChatsPageContent() {
             <>
               <header className="flex items-center justify-between gap-3 border-b border-border p-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     aria-label="Back to conversations"
-                    className="md:hidden"
+                    className="h-9 w-9 px-0 md:hidden"
                     onClick={() => setSelectedId(null)}
                   >
                     <ArrowLeft size={20} />
-                  </button>
+                  </Button>
                   <div className="min-w-0">
                     <p className="truncate font-semibold">
                       {customer?.name ?? "Loading…"}
@@ -510,14 +513,16 @@ function ChatsPageContent() {
               )}
               <div className="border-t border-border p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setNoteMode(!noteMode)}
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
                   >
                     <NotePencil size={14} />{" "}
                     {noteMode ? "Write message" : "Internal note"}
-                  </button>
+                  </Button>
                   <span className="text-xs text-muted-foreground">
                     {serviceWindowOpen
                       ? "Reply window open"
